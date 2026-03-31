@@ -1,0 +1,377 @@
+import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+import Home from "./pages/Home";
+import PackagesPage from "./pages/Packages";
+import AdminPanel from "./pages/AdminPanel";
+import TicketRequest from "./pages/TicketRequest";
+import { getPackages } from "./api";
+import "./styles/styles.css";
+
+const translations = {
+  en: {
+    navHome: "Home",
+    navPackages: "Packages",
+    navTickets: "Ticket Request",
+    navAdmin: "Admin",
+    switchTo: "EL",
+    heroEyebrow: "Curated journeys. Seamless planning.",
+    heroTitle: "Your next unforgettable trip starts here.",
+    heroText:
+      "Discover premium travel packages designed for comfort, adventure, and stress-free experiences.",
+    heroExplore: "Explore Packages",
+    heroTicket: "Request Ticket",
+    heroAbout: "About Us",
+    aboutEyebrow: "About us",
+    aboutTitle: "Travel experts focused on meaningful experiences.",
+    aboutText:
+      "Stella's Travel Agency was built to make travel planning simple, transparent, and inspiring. We combine destination expertise with personal support, so each itinerary feels effortless and unique.",
+    aboutFact1Title: "10+ years",
+    aboutFact1Text: "Designing custom travel plans across Europe and Asia.",
+    aboutFact2Title: "24/7 support",
+    aboutFact2Text: "Assistance before departure and while you are traveling.",
+    aboutFact3Title: "Trusted partners",
+    aboutFact3Text: "Carefully selected hotels, guides, and local experiences.",
+    highlights1Title: "Handpicked Destinations",
+    highlights1Text: "We partner with trusted local operators for exceptional stays and tours.",
+    highlights2Title: "Transparent Pricing",
+    highlights2Text: "No hidden costs. Every package includes clear inclusions and timelines.",
+    highlights3Title: "Personalized Support",
+    highlights3Text: "Our team helps you customize each trip before and during your journey.",
+    locationTitle: "Find Us",
+    locationSubtitle: "Visit Stella's Travel Agency in Ptolemaida.",
+    googleReviewsTitle: "Google Reviews",
+    googleReviewsCta: "Read all reviews on Google",
+    reviewOneName: "Maria K.",
+    reviewOneText: "Great service and very helpful staff. Everything was organized perfectly.",
+    reviewTwoName: "Nikos P.",
+    reviewTwoText: "Excellent experience from start to finish. Strongly recommended.",
+    reviewThreeName: "Eleni T.",
+    reviewThreeText: "Very professional agency and clear communication for every travel detail.",
+    packagesEyebrow: "Tailored for every traveler",
+    packagesTitle: "Our Travel Packages",
+    packagesText: "Filter by destination, budget, or trip duration to find your perfect match.",
+    country: "Country",
+    price: "Price",
+    duration: "Duration (in days)",
+    enterCountry: "Enter country",
+    minPrice: "Min €",
+    maxPrice: "Max €",
+    enterDuration: "Enter duration",
+    to: "to",
+    days: "days",
+    currencySymbol: "€",
+    viewDetails: "View Details",
+    noPackages: "No packages found that match your criteria.",
+    previous: "Previous",
+    next: "Next",
+    page: "Page",
+    of: "of",
+    packageDescriptionFallback: "No extra information yet.",
+    adminTitle: "Admin Panel",
+    adminSubtitle: "Create and update travel packages shown to users.",
+    adminName: "Package name",
+    adminCountry: "Country",
+    adminPrice: "Price (€)",
+    adminDuration: "Duration (days)",
+    adminImage: "Image URL",
+    adminUploadFile: "Upload image or PDF",
+    adminDescription: "Description",
+    adminCreate: "Add Package",
+    adminUpdate: "Update Package",
+    adminCancel: "Cancel Edit",
+    adminManageTitle: "Existing Packages",
+    adminEdit: "Edit",
+    adminDelete: "Delete",
+    adminDeleteConfirm: "Are you sure you want to delete this package?",
+    adminLoginTitle: "Admin Login",
+    adminUsername: "Username",
+    adminPassword: "Password",
+    adminLoginButton: "Sign In",
+    adminLogout: "Sign Out",
+    uploadingFile: "Uploading file...",
+    uploadSuccess: "File uploaded successfully.",
+    openPdf: "Open PDF",
+    adminInvalidCredentials: "Invalid credentials.",
+    loadingPackages: "Loading packages...",
+    packagesLoadError: "Unable to load packages right now.",
+    ticketEyebrow: "Custom travel needs",
+    ticketTitle: "Request a Specific Ticket",
+    ticketSubtitle: "Tell us your details and travel needs, and our team will contact you.",
+    firstName: "First Name",
+    lastName: "Last Name",
+    mobile: "Mobile",
+    mobileCode: "Country Code",
+    mobileNumber: "Mobile Number",
+    dateOfBirth: "Date of Birth",
+    travelDate: "Travel Date",
+    returnDate: "Return Date",
+    returnTicket: "I need a return ticket",
+    transportType: "Transport Type",
+    airplane: "Airplane",
+    boat: "Boat",
+    howManyPeople: "How many people",
+    withSuitcase: "Include suitcase",
+    withCar: "I have a car",
+    submitTicketRequest: "Submit Ticket Request",
+    ticketSuccess: "Your request has been submitted successfully.",
+    ticketError: "Failed to submit request. Please try again.",
+    adminTicketRequests: "Ticket Requests",
+    adminSectionPackages: "Packages",
+    adminSectionTickets: "Ticket Requests",
+    adminStatsPackages: "Total Packages",
+    adminStatsTickets: "Total Tickets",
+    adminStatsPending: "Pending Tickets",
+    adminSearchTickets: "Search tickets",
+    adminFilterStatus: "Filter status",
+    all: "All",
+    adminRequestedAt: "Requested at",
+    status: "Status",
+    ticketChecked: "Checked",
+    ticketPending: "Pending",
+    markChecked: "Mark Checked",
+    markUnchecked: "Uncheck",
+    ticketDeleteConfirm: "Are you sure you want to delete this ticket request?",
+    noTicketRequests: "No ticket requests yet.",
+    yes: "Yes",
+    no: "No",
+    footerAbout:
+      "We craft curated travel experiences for couples, families, and explorers who want every detail handled with care.",
+    footerGeneral: "General Information",
+    weeklyHoursTitle: "Weekly Hours",
+    footerFollow: "Follow Us",
+    addressLabel: "Address",
+    phoneLabel: "Phone",
+    hoursLabel: "Hours",
+    monday: "Monday",
+    tuesday: "Tuesday",
+    wednesday: "Wednesday",
+    thursday: "Thursday",
+    friday: "Friday",
+    saturday: "Saturday",
+    sunday: "Sunday",
+    closed: "Closed",
+    holidayNote: "Note: Holiday schedules may differ.",
+    rights: "All rights reserved.",
+  },
+  el: {
+    navHome: "Αρχική",
+    navPackages: "Πακέτα",
+    navTickets: "Αίτημα Εισιτηρίου",
+    navAdmin: "Διαχείριση",
+    switchTo: "EN",
+    heroEyebrow: "Προσεγμένα ταξίδια. Εύκολος σχεδιασμός.",
+    heroTitle: "Το επόμενο αξέχαστο ταξίδι σας ξεκινά εδώ.",
+    heroText:
+      "Ανακαλύψτε premium ταξιδιωτικά πακέτα σχεδιασμένα για άνεση, περιπέτεια και εμπειρία χωρίς άγχος.",
+    heroExplore: "Δείτε τα Πακέτα",
+    heroTicket: "Αίτημα Εισιτηρίου",
+    heroAbout: "Σχετικά με εμάς",
+    aboutEyebrow: "Σχετικά με εμάς",
+    aboutTitle: "Ταξιδιωτικοί ειδικοί με έμφαση στις ουσιαστικές εμπειρίες.",
+    aboutText:
+      "Το Stella's Travel Agency δημιουργήθηκε για να κάνει τον σχεδιασμό ταξιδιού απλό, διαφανή και εμπνευσμένο. Συνδυάζουμε τεχνογνωσία προορισμών με προσωπική υποστήριξη, ώστε κάθε διαδρομή να είναι ξεκούραστη και μοναδική.",
+    aboutFact1Title: "10+ χρόνια",
+    aboutFact1Text: "Σχεδιάζουμε εξατομικευμένα ταξίδια σε Ευρώπη και Ασία.",
+    aboutFact2Title: "Υποστήριξη 24/7",
+    aboutFact2Text: "Βοήθεια πριν την αναχώρηση και κατά τη διάρκεια του ταξιδιού.",
+    aboutFact3Title: "Αξιόπιστοι συνεργάτες",
+    aboutFact3Text: "Προσεκτικά επιλεγμένα ξενοδοχεία, οδηγοί και τοπικές εμπειρίες.",
+    highlights1Title: "Επιλεγμένοι Προορισμοί",
+    highlights1Text: "Συνεργαζόμαστε με έμπιστους τοπικούς συνεργάτες για κορυφαίες εμπειρίες.",
+    highlights2Title: "Διαφανείς Τιμές",
+    highlights2Text: "Χωρίς κρυφές χρεώσεις. Κάθε πακέτο έχει ξεκάθαρες παροχές και πρόγραμμα.",
+    highlights3Title: "Προσωποποιημένη Υποστήριξη",
+    highlights3Text: "Η ομάδα μας προσαρμόζει κάθε ταξίδι πριν και κατά τη διάρκειά του.",
+    locationTitle: "Θα μας βρείτε εδώ",
+    locationSubtitle: "Επισκεφθείτε το Stella's Travel Agency στην Πτολεμαΐδα.",
+    googleReviewsTitle: "Κριτικές Google",
+    googleReviewsCta: "Δείτε όλες τις κριτικές στο Google",
+    reviewOneName: "Maria K.",
+    reviewOneText: "Εξαιρετική εξυπηρέτηση και πολύ πρόθυμο προσωπικό. Όλα ήταν άψογα οργανωμένα.",
+    reviewTwoName: "Nikos P.",
+    reviewTwoText: "Άριστη εμπειρία από την αρχή μέχρι το τέλος. Το προτείνω ανεπιφύλακτα.",
+    reviewThreeName: "Eleni T.",
+    reviewThreeText: "Πολύ επαγγελματικό γραφείο και ξεκάθαρη ενημέρωση για κάθε λεπτομέρεια.",
+    packagesEyebrow: "Σχεδιασμένα για κάθε ταξιδιώτη",
+    packagesTitle: "Τα Ταξιδιωτικά μας Πακέτα",
+    packagesText: "Φιλτράρετε με προορισμό, budget ή διάρκεια για να βρείτε το ιδανικό πακέτο.",
+    country: "Χώρα",
+    price: "Τιμή",
+    duration: "Διάρκεια (σε ημέρες)",
+    enterCountry: "Εισάγετε χώρα",
+    minPrice: "Ελάχιστο €",
+    maxPrice: "Μέγιστο €",
+    enterDuration: "Εισάγετε διάρκεια",
+    to: "έως",
+    days: "ημέρες",
+    currencySymbol: "€",
+    viewDetails: "Προβολή Λεπτομερειών",
+    noPackages: "Δεν βρέθηκαν πακέτα με αυτά τα κριτήρια.",
+    previous: "Προηγούμενη",
+    next: "Επόμενη",
+    page: "Σελίδα",
+    of: "από",
+    packageDescriptionFallback: "Δεν υπάρχουν επιπλέον πληροφορίες ακόμη.",
+    adminTitle: "Πίνακας Διαχείρισης",
+    adminSubtitle: "Δημιουργήστε και ενημερώστε τα ταξιδιωτικά πακέτα που βλέπουν οι χρήστες.",
+    adminName: "Όνομα πακέτου",
+    adminCountry: "Χώρα",
+    adminPrice: "Τιμή (€)",
+    adminDuration: "Διάρκεια (ημέρες)",
+    adminImage: "URL εικόνας",
+    adminUploadFile: "Ανέβασμα εικόνας ή PDF",
+    adminDescription: "Περιγραφή",
+    adminCreate: "Προσθήκη Πακέτου",
+    adminUpdate: "Ενημέρωση Πακέτου",
+    adminCancel: "Ακύρωση Επεξεργασίας",
+    adminManageTitle: "Υπάρχοντα Πακέτα",
+    adminEdit: "Επεξεργασία",
+    adminDelete: "Διαγραφή",
+    adminDeleteConfirm: "Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το πακέτο;",
+    adminLoginTitle: "Σύνδεση Διαχειριστή",
+    adminUsername: "Όνομα χρήστη",
+    adminPassword: "Κωδικός",
+    adminLoginButton: "Σύνδεση",
+    adminLogout: "Αποσύνδεση",
+    uploadingFile: "Μεταφόρτωση αρχείου...",
+    uploadSuccess: "Το αρχείο ανέβηκε επιτυχώς.",
+    openPdf: "Άνοιγμα PDF",
+    adminInvalidCredentials: "Μη έγκυρα στοιχεία σύνδεσης.",
+    loadingPackages: "Φόρτωση πακέτων...",
+    packagesLoadError: "Δεν είναι δυνατή η φόρτωση πακέτων αυτή τη στιγμή.",
+    ticketEyebrow: "Ειδικές ταξιδιωτικές ανάγκες",
+    ticketTitle: "Αίτημα για Συγκεκριμένο Εισιτήριο",
+    ticketSubtitle: "Συμπληρώστε τα στοιχεία και τις ανάγκες σας και η ομάδα μας θα επικοινωνήσει μαζί σας.",
+    firstName: "Όνομα",
+    lastName: "Επώνυμο",
+    mobile: "Κινητό",
+    mobileCode: "Κωδικός Χώρας",
+    mobileNumber: "Αριθμός Κινητού",
+    dateOfBirth: "Ημερομηνία Γέννησης",
+    travelDate: "Ημερομηνία Αναχώρησης",
+    returnDate: "Ημερομηνία Επιστροφής",
+    returnTicket: "Θέλω εισιτήριο με επιστροφή",
+    transportType: "Μέσο Μεταφοράς",
+    airplane: "Αεροπλάνο",
+    boat: "Πλοίο",
+    howManyPeople: "Πόσα άτομα",
+    withSuitcase: "Με βαλίτσα",
+    withCar: "Έχω αυτοκίνητο",
+    submitTicketRequest: "Αποστολή Αιτήματος",
+    ticketSuccess: "Το αίτημά σας καταχωρήθηκε επιτυχώς.",
+    ticketError: "Αποτυχία καταχώρησης. Προσπαθήστε ξανά.",
+    adminTicketRequests: "Αιτήματα Εισιτηρίων",
+    adminSectionPackages: "Πακέτα",
+    adminSectionTickets: "Αιτήματα Εισιτηρίων",
+    adminStatsPackages: "Σύνολο Πακέτων",
+    adminStatsTickets: "Σύνολο Αιτημάτων",
+    adminStatsPending: "Αιτήματα σε αναμονή",
+    adminSearchTickets: "Αναζήτηση αιτημάτων",
+    adminFilterStatus: "Φίλτρο κατάστασης",
+    all: "Όλα",
+    adminRequestedAt: "Ημερομηνία αιτήματος",
+    status: "Κατάσταση",
+    ticketChecked: "Ελεγμένο",
+    ticketPending: "Σε αναμονή",
+    markChecked: "Σήμανση ως ελεγμένο",
+    markUnchecked: "Αφαίρεση σήμανσης",
+    ticketDeleteConfirm: "Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το αίτημα εισιτηρίου;",
+    noTicketRequests: "Δεν υπάρχουν αιτήματα εισιτηρίων ακόμη.",
+    yes: "Ναι",
+    no: "Όχι",
+    footerAbout:
+      "Δημιουργούμε προσεγμένες ταξιδιωτικές εμπειρίες για ζευγάρια, οικογένειες και ταξιδιώτες που θέλουν όλα να είναι οργανωμένα σωστά.",
+    footerGeneral: "Γενικές Πληροφορίες",
+    weeklyHoursTitle: "Εβδομαδιαίο Ωράριο",
+    footerFollow: "Ακολουθήστε μας",
+    addressLabel: "Διεύθυνση",
+    phoneLabel: "Τηλέφωνο",
+    hoursLabel: "Ώρες",
+    monday: "Δευτέρα",
+    tuesday: "Τρίτη",
+    wednesday: "Τετάρτη",
+    thursday: "Πέμπτη",
+    friday: "Παρασκευή",
+    saturday: "Σάββατο",
+    sunday: "Κυριακή",
+    closed: "Κλειστά",
+    holidayNote: "Σημείωση: Το ωράριο ενδέχεται να διαφέρει τις αργίες.",
+    rights: "Με επιφύλαξη παντός δικαιώματος.",
+  },
+};
+
+const App = () => {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+};
+
+const AppContent = () => {
+  const location = useLocation();
+  const [lang, setLang] = useState("en");
+  const [allPackages, setAllPackages] = useState([]);
+  const [packagesError, setPackagesError] = useState("");
+  const t = translations[lang];
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
+  useEffect(() => {
+    const loadPackages = async () => {
+      try {
+        const rows = await getPackages();
+        setAllPackages(rows);
+        setPackagesError("");
+      } catch (_err) {
+        setPackagesError(t.packagesLoadError);
+      }
+    };
+    loadPackages();
+  }, [t.packagesLoadError]);
+
+  return (
+    <div className="app-shell">
+      {isAdminRoute ? (
+        <button
+          type="button"
+          className="global-lang-switch"
+          onClick={() => setLang(lang === "en" ? "el" : "en")}
+        >
+          <span aria-hidden="true">{lang === "en" ? "🇬🇷" : "🇬🇧"}</span> {t.switchTo}
+        </button>
+      ) : (
+        <Navbar
+          t={t}
+          currentLang={lang}
+          onToggleLanguage={() => setLang(lang === "en" ? "el" : "en")}
+        />
+      )}
+      <main className="page-content">
+        <Routes>
+          <Route path="/" element={<Home t={t} />} />
+          <Route
+            path="/packages"
+            element={<PackagesPage t={t} packages={allPackages} packagesError={packagesError} />}
+          />
+          <Route path="/tickets" element={<TicketRequest t={t} />} />
+          <Route
+            path="/admin"
+            element={
+              <AdminPanel
+                t={t}
+                packages={allPackages}
+                setPackages={setAllPackages}
+                onPackagesError={setPackagesError}
+              />
+            }
+          />
+        </Routes>
+      </main>
+      <Footer t={t} />
+    </div>
+  );
+};
+
+export default App;
