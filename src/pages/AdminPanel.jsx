@@ -377,8 +377,15 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
                     <div>
                       <strong>{item.first_name} {item.last_name}</strong>
                       <p>
-                        {item.transport_type} | {t.howManyPeople}: {item.people_count}
+                        {item.transport_type} | {t.passengers}: {item.people_count}
                       </p>
+                      <p>
+                        {t.fromDestination}: {item.from_destination || "-"} | {t.toDestination}: {item.to_destination || "-"}
+                      </p>
+                      <p>
+                        {t.adults}: {item.adults_count ?? item.people_count ?? 0} | {t.children}: {item.children_count ?? 0} | {t.babies}: {item.babies_count ?? 0}
+                      </p>
+                      {item.notes ? <p>{t.notesDetails}: {item.notes}</p> : null}
                       <p>{t.mobile}: {item.mobile_country_code} {item.mobile_number}</p>
                       <p>
                         {t.travelDate}: {item.travel_date}

@@ -173,6 +173,12 @@ const initDb = async () => {
   await ensureColumn("ticket_requests", "mobile_country_code", "TEXT DEFAULT ''");
   await ensureColumn("ticket_requests", "mobile_number", "TEXT DEFAULT ''");
   await ensureColumn("ticket_requests", "is_checked", "INTEGER DEFAULT 0");
+  await ensureColumn("ticket_requests", "from_destination", "TEXT DEFAULT ''");
+  await ensureColumn("ticket_requests", "to_destination", "TEXT DEFAULT ''");
+  await ensureColumn("ticket_requests", "adults_count", "INTEGER DEFAULT 1");
+  await ensureColumn("ticket_requests", "children_count", "INTEGER DEFAULT 0");
+  await ensureColumn("ticket_requests", "babies_count", "INTEGER DEFAULT 0");
+  await ensureColumn("ticket_requests", "notes", "TEXT DEFAULT ''");
 
   const admin = await get("SELECT id FROM admins WHERE username = ?", [ADMIN_USERNAME]);
   if (!admin) {
@@ -247,8 +253,14 @@ app.post("/api/tickets", async (req, res, next) => {
       dateOfBirth,
       travelDate,
       returnDate = "",
+      fromDestination,
+      toDestination,
       transportType,
       peopleCount,
+      adultsCount = 1,
+      childrenCount = 0,
+      babiesCount = 0,
+      notes = "",
       mobileCountryCode,
       mobileNumber,
       airplaneLuggage = null,
@@ -260,8 +272,10 @@ app.post("/api/tickets", async (req, res, next) => {
       !lastName ||
       !dateOfBirth ||
       !travelDate ||
+      !fromDestination ||
+      !toDestination ||
       !transportType ||
-      !peopleCount ||
+      (!peopleCount && !adultsCount && !childrenCount && !babiesCount) ||
       !mobileCountryCode ||
       !mobileNumber
     ) {
@@ -271,16 +285,22 @@ app.post("/api/tickets", async (req, res, next) => {
 
     const result = await run(
       `INSERT INTO ticket_requests 
-      (first_name, last_name, date_of_birth, travel_date, return_date, transport_type, people_count, mobile_country_code, mobile_number, airplane_luggage, boat_has_car, created_at, is_checked)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (first_name, last_name, date_of_birth, travel_date, return_date, from_destination, to_destination, transport_type, people_count, adults_count, children_count, babies_count, notes, mobile_country_code, mobile_number, airplane_luggage, boat_has_car, created_at, is_checked)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         String(firstName).trim(),
         String(lastName).trim(),
         String(dateOfBirth),
         String(travelDate),
         String(returnDate || ""),
+        String(fromDestination).trim(),
+        String(toDestination).trim(),
         String(transportType),
-        Number(peopleCount),
+        Number(peopleCount || Number(adultsCount) + Number(childrenCount) + Number(babiesCount)),
+        Number(adultsCount),
+        Number(childrenCount),
+        Number(babiesCount),
+        String(notes || "").trim(),
         String(mobileCountryCode).trim(),
         String(mobileNumber).trim(),
         airplaneLuggage === null ? null : airplaneLuggage ? 1 : 0,

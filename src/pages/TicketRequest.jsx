@@ -1,6 +1,58 @@
 import React, { useState } from "react";
 import { createTicketRequest } from "../api";
 
+const airplaneOptionsEn = [
+  "Athens Airport (ATH)",
+  "Thessaloniki Airport (SKG)",
+  "Heraklion Airport (HER)",
+  "Santorini Airport (JTR)",
+  "Mykonos Airport (JMK)",
+  "Rhodes Airport (RHO)",
+  "Corfu Airport (CFU)",
+  "Chania Airport (CHQ)",
+  "Kefalonia Airport (EFL)",
+  "Zakynthos Airport (ZTH)",
+];
+
+const boatOptionsEn = [
+  "Patras Port",
+  "Piraeus Port",
+  "Rafina Port",
+  "Lavrio Port",
+  "Igoumenitsa Port",
+  "Volos Port",
+  "Heraklion Port",
+  "Santorini Port (Athinios)",
+  "Mykonos Port",
+  "Thessaloniki Port",
+];
+
+const airplaneOptionsEl = [
+  "Αεροδρόμιο Αθήνας (ATH)",
+  "Αεροδρόμιο Θεσσαλονίκης (SKG)",
+  "Αεροδρόμιο Ηρακλείου (HER)",
+  "Αεροδρόμιο Σαντορίνης (JTR)",
+  "Αεροδρόμιο Μυκόνου (JMK)",
+  "Αεροδρόμιο Ρόδου (RHO)",
+  "Αεροδρόμιο Κέρκυρας (CFU)",
+  "Αεροδρόμιο Χανίων (CHQ)",
+  "Αεροδρόμιο Κεφαλονιάς (EFL)",
+  "Αεροδρόμιο Ζακύνθου (ZTH)",
+];
+
+const boatOptionsEl = [
+  "Λιμάνι Πάτρας",
+  "Λιμάνι Πειραιά",
+  "Λιμάνι Ραφήνας",
+  "Λιμάνι Λαυρίου",
+  "Λιμάνι Ηγουμενίτσας",
+  "Λιμάνι Βόλου",
+  "Λιμάνι Ηρακλείου",
+  "Λιμάνι Σαντορίνης (Αθηνιός)",
+  "Λιμάνι Μυκόνου",
+  "Λιμάνι Θεσσαλονίκης",
+];
+
 const initialForm = {
   firstName: "",
   lastName: "",
@@ -9,20 +61,42 @@ const initialForm = {
   dateOfBirth: "",
   travelDate: "",
   returnDate: "",
+  fromDestination: "",
+  toDestination: "",
   hasReturn: false,
   transportType: "airplane",
-  peopleCount: 1,
+  adultsCount: 1,
+  childrenCount: 0,
+  babiesCount: 0,
+  notes: "",
   airplaneLuggage: false,
   boatHasCar: false,
 };
 
-const TicketRequest = ({ t }) => {
+const TicketRequest = ({ t, lang }) => {
   const [formData, setFormData] = useState(initialForm);
   const [status, setStatus] = useState("");
   const [statusType, setStatusType] = useState("");
+  const totalPassengers =
+    Number(formData.adultsCount || 0) +
+    Number(formData.childrenCount || 0) +
+    Number(formData.babiesCount || 0);
 
   const setField = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const isGreek = lang === "el";
+  const airplaneOptions = isGreek ? airplaneOptionsEl : airplaneOptionsEn;
+  const boatOptions = isGreek ? boatOptionsEl : boatOptionsEn;
+  const destinationOptions = formData.transportType === "boat" ? boatOptions : airplaneOptions;
+
+  const adjustCount = (field, delta) => {
+    setFormData((prev) => {
+      const current = Number(prev[field] || 0);
+      const next = Math.max(0, current + delta);
+      return { ...prev, [field]: next };
+    });
   };
 
   const handleSubmit = async (event) => {
@@ -36,8 +110,17 @@ const TicketRequest = ({ t }) => {
         dateOfBirth: formData.dateOfBirth,
         travelDate: formData.travelDate,
         returnDate: formData.hasReturn ? formData.returnDate : "",
+        fromDestination: formData.fromDestination,
+        toDestination: formData.toDestination,
         transportType: formData.transportType,
-        peopleCount: Number(formData.peopleCount),
+        adultsCount: Number(formData.adultsCount),
+        childrenCount: Number(formData.childrenCount),
+        babiesCount: Number(formData.babiesCount),
+        peopleCount:
+          Number(formData.adultsCount) +
+          Number(formData.childrenCount) +
+          Number(formData.babiesCount),
+        notes: formData.notes.trim(),
         airplaneLuggage: formData.transportType === "airplane" ? formData.airplaneLuggage : null,
         boatHasCar: formData.transportType === "boat" ? formData.boatHasCar : null,
       });
@@ -118,6 +201,42 @@ const TicketRequest = ({ t }) => {
             required
           />
         </label>
+        <label>
+          {t.transportType}
+          <select
+            value={formData.transportType}
+            onChange={(e) => setField("transportType", e.target.value)}
+          >
+            <option value="airplane">{t.airplane}</option>
+            <option value="boat">{t.boat}</option>
+          </select>
+        </label>
+        <div className="admin-span-2 transport-note">{t.chooseTransportFirst}</div>
+        <label>
+          {t.fromDestination}
+          <input
+            value={formData.fromDestination}
+            onChange={(e) => setField("fromDestination", e.target.value)}
+            list="destination-options"
+            placeholder={formData.transportType === "boat" ? t.fromPlaceholderBoat : t.fromPlaceholderAir}
+            required
+          />
+        </label>
+        <label>
+          {t.toDestination}
+          <input
+            value={formData.toDestination}
+            onChange={(e) => setField("toDestination", e.target.value)}
+            list="destination-options"
+            placeholder={formData.transportType === "boat" ? t.toPlaceholderBoat : t.toPlaceholderAir}
+            required
+          />
+        </label>
+        <datalist id="destination-options">
+          {destinationOptions.map((option) => (
+            <option value={option} key={option} />
+          ))}
+        </datalist>
 
         <label className="checkbox-row admin-span-2">
           <input
@@ -140,24 +259,83 @@ const TicketRequest = ({ t }) => {
           </label>
         ) : null}
 
-        <label>
-          {t.transportType}
-          <select
-            value={formData.transportType}
-            onChange={(e) => setField("transportType", e.target.value)}
-          >
-            <option value="airplane">{t.airplane}</option>
-            <option value="boat">{t.boat}</option>
-          </select>
-        </label>
-        <label>
-          {t.howManyPeople}
-          <input
-            type="number"
-            min="1"
-            value={formData.peopleCount}
-            onChange={(e) => setField("peopleCount", e.target.value)}
-            required
+        <div className="admin-span-2 passenger-grid">
+          <div className="passenger-counter">
+            <span>{t.adults}</span>
+            <div className="counter-controls">
+              <button
+                type="button"
+                className="counter-btn"
+                onClick={() => adjustCount("adultsCount", -1)}
+                disabled={Number(formData.adultsCount) <= 0}
+              >
+                -
+              </button>
+              <strong>{formData.adultsCount}</strong>
+              <button
+                type="button"
+                className="counter-btn"
+                onClick={() => adjustCount("adultsCount", 1)}
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div className="passenger-counter">
+            <span>{t.children}</span>
+            <div className="counter-controls">
+              <button
+                type="button"
+                className="counter-btn"
+                onClick={() => adjustCount("childrenCount", -1)}
+                disabled={Number(formData.childrenCount) <= 0}
+              >
+                -
+              </button>
+              <strong>{formData.childrenCount}</strong>
+              <button
+                type="button"
+                className="counter-btn"
+                onClick={() => adjustCount("childrenCount", 1)}
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div className="passenger-counter">
+            <span>{t.babies}</span>
+            <div className="counter-controls">
+              <button
+                type="button"
+                className="counter-btn"
+                onClick={() => adjustCount("babiesCount", -1)}
+                disabled={Number(formData.babiesCount) <= 0}
+              >
+                -
+              </button>
+              <strong>{formData.babiesCount}</strong>
+              <button
+                type="button"
+                className="counter-btn"
+                onClick={() => adjustCount("babiesCount", 1)}
+              >
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+        <p className="admin-span-2 passenger-total">
+          {t.passengers}: {totalPassengers}
+        </p>
+
+        <label className="admin-span-2">
+          {t.notesDetails}
+          <textarea
+            rows="4"
+            value={formData.notes}
+            onChange={(e) => setField("notes", e.target.value)}
           />
         </label>
 

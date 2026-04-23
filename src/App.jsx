@@ -107,11 +107,23 @@ const translations = {
     dateOfBirth: "Date of Birth",
     travelDate: "Travel Date",
     returnDate: "Return Date",
+    fromDestination: "From",
+    toDestination: "To",
     returnTicket: "I need a return ticket",
     transportType: "Transport Type",
+    chooseTransportFirst: "Choose transport first to get relevant suggestions.",
     airplane: "Airplane",
     boat: "Boat",
+    fromPlaceholderAir: "Type city or airport",
+    toPlaceholderAir: "Type city or airport",
+    fromPlaceholderBoat: "Type departure port",
+    toPlaceholderBoat: "Type arrival port",
     howManyPeople: "How many people",
+    adults: "Adults",
+    children: "Children",
+    babies: "Babies",
+    passengers: "Passengers",
+    notesDetails: "Notes / Details",
     withSuitcase: "Include suitcase",
     withCar: "I have a car",
     submitTicketRequest: "Submit Ticket Request",
@@ -252,11 +264,23 @@ const translations = {
     dateOfBirth: "Ημερομηνία Γέννησης",
     travelDate: "Ημερομηνία Αναχώρησης",
     returnDate: "Ημερομηνία Επιστροφής",
+    fromDestination: "Από",
+    toDestination: "Προς",
     returnTicket: "Θέλω εισιτήριο με επιστροφή",
     transportType: "Μέσο Μεταφοράς",
+    chooseTransportFirst: "Επιλέξτε πρώτα μέσο μεταφοράς για σχετικές προτάσεις.",
     airplane: "Αεροπλάνο",
     boat: "Πλοίο",
+    fromPlaceholderAir: "Πληκτρολογήστε πόλη ή αεροδρόμιο",
+    toPlaceholderAir: "Πληκτρολογήστε πόλη ή αεροδρόμιο",
+    fromPlaceholderBoat: "Πληκτρολογήστε λιμάνι αναχώρησης",
+    toPlaceholderBoat: "Πληκτρολογήστε λιμάνι άφιξης",
     howManyPeople: "Πόσα άτομα",
+    adults: "Ενήλικες",
+    children: "Παιδιά",
+    babies: "Βρέφη",
+    passengers: "Επιβάτες",
+    notesDetails: "Σημειώσεις / Λεπτομέρειες",
     withSuitcase: "Με βαλίτσα",
     withCar: "Έχω αυτοκίνητο",
     submitTicketRequest: "Αποστολή Αιτήματος",
@@ -355,7 +379,7 @@ const AppContent = () => {
             path="/packages"
             element={<PackagesPage t={t} packages={allPackages} packagesError={packagesError} />}
           />
-          <Route path="/tickets" element={<TicketRequest t={t} />} />
+          <Route path="/tickets" element={<TicketRequest t={t} lang={lang} />} />
           <Route
             path="/admin"
             element={

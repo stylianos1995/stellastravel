@@ -620,6 +620,60 @@ body {
   font-size: 0.9rem;
 }
 
+.transport-note {
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.passenger-total {
+  margin: 0;
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
+.passenger-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.passenger-counter {
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  background: #f8fbff;
+  padding: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.passenger-counter span {
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+.counter-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.counter-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.counter-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .checkbox-row {
   flex-direction: row !important;
   align-items: center;
@@ -759,5 +813,9 @@ body {
 
   .admin-ticket-tools {
     flex-direction: column;
+  }
+
+  .passenger-grid {
+    grid-template-columns: 1fr;
   }
 }
