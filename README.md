@@ -28,13 +28,13 @@ They communicate over HTTP: the UI uses `fetch` through a small client in `src/a
 
 Optional `.env` in the project root (loaded via `dotenv`):
 
-| Variable | Purpose | Default (if unset) |
-|----------|---------|---------------------|
-| `PORT` | API listen port | `5000` |
-| `JWT_SECRET` | Sign/verify admin tokens | `change-me-secret` (override in production) |
-| `JWT_EXPIRES_IN` | Admin JWT lifetime (e.g. `12h`, `7d`, `30d`) | `30d` |
-| `ADMIN_USERNAME` | Seed admin user | `admin` |
-| `ADMIN_PASSWORD` | Seed admin password | `admin123` |
+| Variable         | Purpose                                      | Default (if unset)                          |
+| ---------------- | -------------------------------------------- | ------------------------------------------- |
+| `PORT`           | API listen port                              | `5000`                                      |
+| `JWT_SECRET`     | Sign/verify admin tokens                     | `change-me-secret` (override in production) |
+| `JWT_EXPIRES_IN` | Admin JWT lifetime (e.g. `12h`, `7d`, `30d`) | `30d`                                       |
+| `ADMIN_USERNAME` | Seed admin user                              | `admin`                                     |
+| `ADMIN_PASSWORD` | Seed admin password                          | `admin123`                                  |
 
 On first startup, if no row exists for `ADMIN_USERNAME`, an admin account is inserted with a bcrypt hash of `ADMIN_PASSWORD`.
 
@@ -92,12 +92,12 @@ Errors return JSON with a `message` field when possible; `500` responses avoid l
 - `src/index.js` mounts `App`.
 - `src/App.jsx` holds bilingual copy, loads packages via `getPackages()` on startup, and defines routes:
 
-| Path | Page |
-|------|------|
-| `/` | Home |
+| Path        | Page                                       |
+| ----------- | ------------------------------------------ |
+| `/`         | Home                                       |
 | `/packages` | Packages (filters + pagination over props) |
-| `/tickets` | Ticket request form → `POST /api/tickets` |
-| `/admin` | Admin login, package CRUD, ticket inbox |
+| `/tickets`  | Ticket request form → `POST /api/tickets`  |
+| `/admin`    | Admin login, package CRUD, ticket inbox    |
 
 ### API client (`src/api.js`)
 

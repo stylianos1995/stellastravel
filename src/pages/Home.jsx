@@ -1,6 +1,15 @@
 import React from "react";
 import heroWallpaper from "../assets/hero.png";
 import WeeklyHours from "../components/WeeklyHours";
+import { partnerAgencies } from "../Data/partnerAgencies";
+
+function partnerWebsiteHref(raw) {
+  const s = String(raw ?? "").trim();
+  if (!s) return "";
+  if (/^https?:\/\//i.test(s)) return s;
+  if (s.startsWith("//")) return `https:${s}`;
+  return `https://${s}`;
+}
 
 const Home = ({ t }) => {
   return (
@@ -49,6 +58,42 @@ const Home = ({ t }) => {
           <p>{t.highlights3Text}</p>
         </article>
       </section>
+
+      {partnerAgencies.length > 0 ? (
+        <section className="partners-section" id="partners" aria-labelledby="partners-heading">
+          <p className="eyebrow">{t.partnersEyebrow}</p>
+          <h2 id="partners-heading">{t.partnersTitle}</h2>
+          <p className="partners-intro">{t.partnersIntro}</p>
+          <ul className="partners-grid">
+            {partnerAgencies.map((p, i) => {
+              const href = partnerWebsiteHref(p.website);
+              const key = `${p.name}-${i}`;
+              if (href) {
+                return (
+                  <li key={key}>
+                    <a
+                      className="partner-card partner-card--link"
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <span className="partner-name">{p.name}</span>
+                      <span className="partner-visit">{t.partnersVisitSite}</span>
+                    </a>
+                  </li>
+                );
+              }
+              return (
+                <li key={key}>
+                  <span className="partner-card">
+                    <span className="partner-name">{p.name}</span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
 
       <section className="location-reviews">
         <div className="location-block">

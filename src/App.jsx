@@ -39,6 +39,11 @@ const translations = {
     highlights2Text: "No hidden costs. Every package includes clear inclusions and timelines.",
     highlights3Title: "Personalized Support",
     highlights3Text: "Our team helps you customize each trip before and during your journey.",
+    partnersEyebrow: "Our network",
+    partnersTitle: "Partner travel agencies",
+    partnersIntro:
+      "We work with trusted partner agencies. When a website is available, you can open it from the partner name.",
+    partnersVisitSite: "Visit site",
     locationTitle: "Find Us",
     locationSubtitle: "Visit Stella's Travel Agency in Ptolemaida.",
     googleReviewsTitle: "Google Reviews",
@@ -199,6 +204,11 @@ const translations = {
     highlights2Text: "Χωρίς κρυφές χρεώσεις. Κάθε πακέτο έχει ξεκάθαρες παροχές και πρόγραμμα.",
     highlights3Title: "Προσωποποιημένη Υποστήριξη",
     highlights3Text: "Η ομάδα μας προσαρμόζει κάθε ταξίδι πριν και κατά τη διάρκειά του.",
+    partnersEyebrow: "Το δίκτυό μας",
+    partnersTitle: "Συνεργαζόμενα ταξιδιωτικά γραφεία",
+    partnersIntro:
+      "Συνεργαζόμαστε με αξιόπιστα συνεργαζόμενα γραφεία. Όταν υπάρχει ιστότοπος, μπορείτε να τον ανοίξετε από το όνομα του συνεργάτη.",
+    partnersVisitSite: "Επίσκεψη ιστότοπου",
     locationTitle: "Θα μας βρείτε εδώ",
     locationSubtitle: "Επισκεφθείτε το Stella's Travel Agency στην Πτολεμαΐδα.",
     googleReviewsTitle: "Κριτικές Google",
