@@ -388,12 +388,25 @@ body {
   color: #0f172a;
 }
 
+.package-cover-wrap {
+  display: block;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.package-cover-wrap .package-image {
+  margin-bottom: 0;
+}
+
 .package-image {
   width: 100%;
   height: 160px;
   object-fit: cover;
   border-radius: 10px;
-  margin-bottom: 12px;
+  display: block;
+  margin-bottom: 0;
+  transition: transform 0.2s ease;
 }
 
 .package-country {
@@ -408,36 +421,39 @@ body {
   line-height: 1.5;
 }
 
-.package-pdf-preview {
+.package-pdf-placeholder {
   height: 160px;
   border-radius: 10px;
   margin-bottom: 12px;
-  background: linear-gradient(135deg, #1e293b, #334155);
-  color: #e2e8f0;
+  border: 2px dashed #cbd5e1;
+  background: #f8fafc;
+  color: #64748b;
   display: grid;
   place-content: center;
-  gap: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.package-view-details {
+  margin-top: 4px;
+  display: inline-block;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
   text-align: center;
 }
 
-.package-pdf-preview span {
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-.package-pdf-preview a {
-  color: #93c5fd;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.package-pdf-preview a:hover {
-  text-decoration: underline;
+.package-view-details:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .package-meta {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 18px;
   margin-bottom: 14px;
   color: #334155;
   font-weight: 600;
@@ -614,14 +630,86 @@ body {
   font-weight: 600;
 }
 
-.upload-status {
-  margin-top: 6px;
-  color: #475569;
-  font-size: 0.9rem;
+.upload-hint {
+  margin: 6px 0 10px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #64748b;
 }
 
 .transport-note {
   color: #475569;
+  font-size: 0.9rem;
+}
+
+.ticket-travel-block {
+  display: grid;
+  gap: 12px;
+  align-items: end;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.ticket-travel-block.has-return {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+}
+
+.ticket-travel-field {
+  margin: 0;
+}
+
+.ticket-return-check {
+  margin: 0;
+  padding-bottom: 2px;
+}
+
+.ticket-dob-field {
+  max-width: min(420px, 100%);
+}
+
+.ticket-transport-block {
+  display: grid;
+  gap: 10px;
+}
+
+.ticket-transport-label {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.transport-choice-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.transport-choice-btn {
+  flex: 1;
+  min-width: 140px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 2px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.transport-choice-btn:hover {
+  border-color: #93c5fd;
+  background: #f8fbff;
+}
+
+.transport-choice-btn.selected {
+  border-color: #1d4ed8;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.transport-hint {
+  margin: 0;
+  color: #64748b;
   font-size: 0.9rem;
 }
 
@@ -804,6 +892,11 @@ body {
   }
 
   .admin-form {
+    grid-template-columns: 1fr;
+  }
+
+  .ticket-travel-block,
+  .ticket-travel-block.has-return {
     grid-template-columns: 1fr;
   }
 

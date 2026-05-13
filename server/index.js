@@ -11,6 +11,8 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || "change-me-secret";
+/** How long admin JWTs remain valid (e.g. "12h", "7d", "30d"). Shorter values reduce exposure if a token leaks. */
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "30d";
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
@@ -43,7 +45,14 @@ const upload = multer({
   },
 });
 
-app.use(cors());
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: ["Authorization", "Content-Type", "X-Requested-With"],
+  })
+);
 app.use(express.json());
 app.use("/uploads", express.static(uploadsDir));
 
@@ -124,7 +133,17 @@ const authenticateToken = (req, res, next) => {
     const payload = jwt.verify(token, JWT_SECRET);
     req.user = payload;
     next();
-  } catch (_err) {
+  } catch (err) {
+    if (err && err.name === "TokenExpiredError") {
+      res.status(401).json({ message: "Session expired. Please sign in again." });
+      return;
+    }
+    if (err && err.name === "JsonWebTokenError") {
+      res
+        .status(401)
+        .json({ message: "Invalid token. Sign out and sign in again (server secret may have changed)." });
+      return;
+    }
     res.status(401).json({ message: "Invalid token" });
   }
 };
@@ -180,6 +199,8 @@ const initDb = async () => {
   await ensureColumn("ticket_requests", "babies_count", "INTEGER DEFAULT 0");
   await ensureColumn("ticket_requests", "notes", "TEXT DEFAULT ''");
 
+  await ensureColumn("packages", "pdf_url", "TEXT DEFAULT ''");
+
   const admin = await get("SELECT id FROM admins WHERE username = ?", [ADMIN_USERNAME]);
   if (!admin) {
     const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
@@ -193,8 +214,8 @@ const initDb = async () => {
   if (!packageCount || packageCount.count === 0) {
     for (const pkg of defaultPackages) {
       await run(
-        "INSERT INTO packages (name, country, price, duration, image, description) VALUES (?, ?, ?, ?, ?, ?)",
-        [pkg.name, pkg.country, pkg.price, pkg.duration, pkg.image, pkg.description]
+        "INSERT INTO packages (name, country, price, duration, image, description, pdf_url) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [pkg.name, pkg.country, pkg.price, pkg.duration, pkg.image, pkg.description, ""]
       );
     }
   }
@@ -232,7 +253,7 @@ app.post("/api/auth/login", async (req, res, next) => {
     }
 
     const token = jwt.sign({ sub: admin.id, username: admin.username }, JWT_SECRET, {
-      expiresIn: "12h",
+      expiresIn: JWT_EXPIRES_IN,
     });
     res.json({ token });
   } catch (err) {
@@ -378,23 +399,41 @@ app.post("/api/uploads", authenticateToken, upload.single("file"), (req, res) =>
   res.status(201).json({ url: fileUrl, kind });
 });
 
+const optionalPackageInt = (value, fallback = 0) => {
+  if (value === undefined || value === null || value === "") {
+    return fallback;
+  }
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
+
 app.post("/api/packages", authenticateToken, async (req, res, next) => {
   try {
-    const { name, country, price, duration, image = "", description = "" } = req.body || {};
-    if (!name || !country || !price || !duration) {
-      res.status(400).json({ message: "name, country, price and duration are required." });
+    const body = req.body || {};
+    const {
+      name,
+      country = "",
+      price,
+      duration,
+      image = "",
+      description = "",
+    } = body;
+    const pdfStored = String(body.pdfUrl ?? body.pdf_url ?? "").trim();
+    if (!String(name ?? "").trim()) {
+      res.status(400).json({ message: "Package name is required." });
       return;
     }
 
     const result = await run(
-      "INSERT INTO packages (name, country, price, duration, image, description) VALUES (?, ?, ?, ?, ?, ?)",
+      "INSERT INTO packages (name, country, price, duration, image, description, pdf_url) VALUES (?, ?, ?, ?, ?, ?, ?)",
       [
         String(name).trim(),
-        String(country).trim(),
-        Number(price),
-        Number(duration),
-        String(image).trim(),
-        String(description).trim(),
+        String(country ?? "").trim(),
+        optionalPackageInt(price, 0),
+        optionalPackageInt(duration, 0),
+        String(image ?? "").trim(),
+        String(description ?? "").trim(),
+        pdfStored,
       ]
     );
 
@@ -408,22 +447,32 @@ app.post("/api/packages", authenticateToken, async (req, res, next) => {
 app.put("/api/packages/:id", authenticateToken, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, country, price, duration, image = "", description = "" } = req.body || {};
+    const body = req.body || {};
+    const {
+      name,
+      country = "",
+      price,
+      duration,
+      image = "",
+      description = "",
+    } = body;
+    const pdfStored = String(body.pdfUrl ?? body.pdf_url ?? "").trim();
 
-    if (!name || !country || !price || !duration) {
-      res.status(400).json({ message: "name, country, price and duration are required." });
+    if (!String(name ?? "").trim()) {
+      res.status(400).json({ message: "Package name is required." });
       return;
     }
 
     const result = await run(
-      "UPDATE packages SET name = ?, country = ?, price = ?, duration = ?, image = ?, description = ? WHERE id = ?",
+      "UPDATE packages SET name = ?, country = ?, price = ?, duration = ?, image = ?, description = ?, pdf_url = ? WHERE id = ?",
       [
         String(name).trim(),
-        String(country).trim(),
-        Number(price),
-        Number(duration),
-        String(image).trim(),
-        String(description).trim(),
+        String(country ?? "").trim(),
+        optionalPackageInt(price, 0),
+        optionalPackageInt(duration, 0),
+        String(image ?? "").trim(),
+        String(description ?? "").trim(),
+        pdfStored,
         id,
       ]
     );

@@ -16,6 +16,7 @@ const emptyForm = {
   price: "",
   duration: "",
   image: "",
+  pdfUrl: "",
   description: "",
 };
 
@@ -58,18 +59,27 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    const parseOptionalInt = (raw) => {
+      if (raw === "" || raw === undefined || raw === null) {
+        return 0;
+      }
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : 0;
+    };
+
     const nextPackage = {
       id: editingId ?? Date.now(),
       name: formData.name.trim(),
       country: formData.country.trim(),
-      price: Number(formData.price),
-      duration: Number(formData.duration),
+      price: parseOptionalInt(formData.price),
+      duration: parseOptionalInt(formData.duration),
       image: formData.image.trim(),
+      pdfUrl: formData.pdfUrl.trim(),
       description: formData.description.trim(),
     };
 
-    if (!nextPackage.name || !nextPackage.country || !nextPackage.price || !nextPackage.duration) {
-      setFormError("Please complete required fields.");
+    if (!nextPackage.name) {
+      setFormError(t.adminPackageNameRequired);
       return;
     }
 
@@ -97,6 +107,7 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
       price: String(pkg.price ?? ""),
       duration: String(pkg.duration ?? ""),
       image: pkg.image ?? "",
+      pdfUrl: pkg.pdf_url ?? "",
       description: pkg.description ?? "",
     });
   };
@@ -132,17 +143,51 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
     }
   };
 
-  const handleFileUpload = async (event) => {
+  const handleBrochurePdfUpload = async (event) => {
     const file = event.target.files?.[0];
+    const input = event.target;
     if (!file) return;
+    const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name || "");
+    if (!isPdf) {
+      setUploadStatus(t.adminPdfOnly);
+      input.value = "";
+      return;
+    }
     try {
       setUploadStatus(t.uploadingFile);
       const result = await uploadPackageAsset(file, token);
+      setFormData((prev) => ({ ...prev, pdfUrl: result.url }));
+      setUploadStatus(t.uploadSuccess);
+    } catch (err) {
+      setUploadStatus(err.message);
+    }
+    input.value = "";
+  };
+
+  const handleCoverImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+    const input = event.target;
+    if (!file) return;
+    const isImage = file.type.startsWith("image/");
+    if (!isImage) {
+      setUploadStatus(t.adminImageOnly);
+      input.value = "";
+      return;
+    }
+    try {
+      setUploadStatus(t.uploadingFile);
+      const result = await uploadPackageAsset(file, token);
+      if (result.kind !== "image") {
+        setUploadStatus(t.adminImageOnly);
+        input.value = "";
+        return;
+      }
       setFormData((prev) => ({ ...prev, image: result.url }));
       setUploadStatus(t.uploadSuccess);
     } catch (err) {
       setUploadStatus(err.message);
     }
+    input.value = "";
   };
 
   const handleLogout = () => {
@@ -273,46 +318,45 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
                   <input
                     value={formData.country}
                     onChange={(e) => handleChange("country", e.target.value)}
-                    required
                   />
                 </label>
                 <label>
                   {t.adminPrice}
                   <input
                     type="number"
-                    min="1"
+                    min="0"
                     value={formData.price}
                     onChange={(e) => handleChange("price", e.target.value)}
-                    required
                   />
                 </label>
                 <label>
                   {t.adminDuration}
                   <input
                     type="number"
-                    min="1"
+                    min="0"
                     value={formData.duration}
                     onChange={(e) => handleChange("duration", e.target.value)}
-                    required
                   />
                 </label>
                 <label className="admin-span-2">
-                  {t.adminImage}
-                  <input
-                    type="url"
-                    value={formData.image}
-                    onChange={(e) => handleChange("image", e.target.value)}
-                  />
-                </label>
-                <label className="admin-span-2">
-                  {t.adminUploadFile}
+                  {t.adminUploadCoverImage}
                   <input
                     type="file"
-                    accept="image/*,application/pdf"
-                    onChange={handleFileUpload}
+                    accept="image/*"
+                    onChange={handleCoverImageUpload}
                   />
-                  {uploadStatus ? <span className="upload-status">{uploadStatus}</span> : null}
                 </label>
+                <label className="admin-span-2">
+                  {t.adminUploadPdf}
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={handleBrochurePdfUpload}
+                  />
+                </label>
+                {uploadStatus ? (
+                  <span className="upload-status admin-span-2">{uploadStatus}</span>
+                ) : null}
                 <label className="admin-span-2">
                   {t.adminDescription}
                   <textarea

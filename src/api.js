@@ -1,5 +1,11 @@
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
+/** Normalize token from storage/state so stray whitespace does not break JWT verification. */
+const bearerHeaders = (token) => {
+  const trimmed = String(token ?? "").trim();
+  return trimmed ? { Authorization: `Bearer ${trimmed}` } : {};
+};
+
 const request = async (path, options = {}) => {
   const headers = {
     ...(options.headers || {}),
@@ -42,21 +48,21 @@ export const getPackages = () => request("/packages");
 export const createPackage = (payload, token) =>
   request("/packages", {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: bearerHeaders(token),
     body: JSON.stringify(payload),
   });
 
 export const updatePackage = (id, payload, token) =>
   request(`/packages/${id}`, {
     method: "PUT",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: bearerHeaders(token),
     body: JSON.stringify(payload),
   });
 
 export const deletePackage = (id, token) =>
   request(`/packages/${id}`, {
     method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: bearerHeaders(token),
   });
 
 export const uploadPackageAsset = (file, token) => {
@@ -64,7 +70,7 @@ export const uploadPackageAsset = (file, token) => {
   formData.append("file", file);
   return request("/uploads", {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: bearerHeaders(token),
     body: formData,
   });
 };
@@ -78,18 +84,18 @@ export const createTicketRequest = (payload) =>
 export const getTicketRequests = (token) =>
   request("/tickets", {
     method: "GET",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: bearerHeaders(token),
   });
 
 export const markTicketRequestChecked = (id, checked, token) =>
   request(`/tickets/${id}/check`, {
     method: "PUT",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: bearerHeaders(token),
     body: JSON.stringify({ checked }),
   });
 
 export const deleteTicketRequest = (id, token) =>
   request(`/tickets/${id}`, {
     method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: bearerHeaders(token),
   });

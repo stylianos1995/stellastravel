@@ -1,5 +1,54 @@
 import React, { useEffect, useState } from "react";
 
+const defaultApiBase = "http://localhost:5000/api";
+
+/** API host for resolving `/uploads/...` paths (must not use the React dev server origin). */
+function getApiOrigin() {
+  try {
+    const base = process.env.REACT_APP_API_URL || defaultApiBase;
+    return new URL(base).origin;
+  } catch {
+    try {
+      return new URL(defaultApiBase).origin;
+    } catch {
+      return "http://localhost:5000";
+    }
+  }
+}
+
+function resolveAnyUrl(raw) {
+  const s = String(raw ?? "").trim();
+  if (!s) return "";
+  if (/^https?:\/\//i.test(s)) return s;
+  if (s.startsWith("//")) return `https:${s}`;
+  if (s.startsWith("/")) {
+    const origin = getApiOrigin();
+    return `${origin.replace(/\/$/, "")}${s}`;
+  }
+  return s;
+}
+
+/**
+ * Resolved absolute PDF URL for opening in a new tab.
+ * Uses `pdf_url` from the API; older rows may still have a `.pdf` URL in `image` only.
+ */
+function getPackagePdfUrl(pkg) {
+  const raw = pkg?.pdf_url ?? pkg?.pdfUrl ?? "";
+  const fromPdf = resolveAnyUrl(raw);
+  if (fromPdf) return fromPdf;
+  const legacy = resolveAnyUrl(pkg?.image);
+  if (legacy && /\.pdf($|\?)/i.test(legacy)) return legacy;
+  return "";
+}
+
+/** Cover image for the card only (not used for View Details). Ignore PDF URLs in `image`. */
+function getPackageCoverPhotoUrl(pkg) {
+  const imageField = resolveAnyUrl(pkg?.image);
+  if (!imageField) return "";
+  if (/\.pdf($|\?)/i.test(imageField)) return "";
+  return imageField;
+}
+
 const PackagesPage = ({ t, packages, packagesError }) => {
   const [country, setCountry] = useState("");
   const [priceMin, setPriceMin] = useState("");
@@ -9,15 +58,26 @@ const PackagesPage = ({ t, packages, packagesError }) => {
   const packagesPerPage = 6;
 
   const filteredPackages = packages.filter((pkg) => {
+    const pkgCountry = (pkg.country ?? "").toLowerCase();
+    const filterCountry = country.trim().toLowerCase();
     return (
-      (country ? pkg.country.toLowerCase().includes(country.toLowerCase()) : true) &&
-      (priceMin ? pkg.price >= parseInt(priceMin) : true) &&
-      (priceMax ? pkg.price <= parseInt(priceMax) : true) &&
-      (duration ? pkg.duration === parseInt(duration) : true)
+      (filterCountry ? pkgCountry.includes(filterCountry) : true) &&
+      (priceMin ? Number(pkg.price) >= parseInt(priceMin, 10) : true) &&
+      (priceMax ? Number(pkg.price) <= parseInt(priceMax, 10) : true) &&
+      (duration ? Number(pkg.duration) === parseInt(duration, 10) : true)
     );
   });
 
-  const isPdfAsset = (url = "") => /\.pdf($|\?)/i.test(url);
+  const hasCountry = (pkg) => Boolean(String(pkg.country ?? "").trim());
+  const hasDescription = (pkg) => Boolean(String(pkg.description ?? "").trim());
+  const hasPrice = (pkg) => {
+    const n = Number(pkg.price);
+    return Number.isFinite(n) && n > 0;
+  };
+  const hasDuration = (pkg) => {
+    const n = Number(pkg.duration);
+    return Number.isFinite(n) && n > 0;
+  };
   const totalPages = Math.max(1, Math.ceil(filteredPackages.length / packagesPerPage));
   const startIdx = (currentPage - 1) * packagesPerPage;
   const visiblePackages = filteredPackages.slice(startIdx, startIdx + packagesPerPage);
@@ -83,34 +143,56 @@ const PackagesPage = ({ t, packages, packagesError }) => {
 
       <div className="packages-list">
         {!packagesError && visiblePackages.length > 0 ? (
-          visiblePackages.map((pkg) => (
+          visiblePackages.map((pkg) => {
+            const pdfUrl = getPackagePdfUrl(pkg);
+            const coverUrl = getPackageCoverPhotoUrl(pkg);
+            const showPlaceholder = !coverUrl && !pdfUrl;
+
+            return (
             <article className="package" key={pkg.id}>
-              {pkg.image ? (
-                isPdfAsset(pkg.image) ? (
-                  <div className="package-pdf-preview">
-                    <span>PDF</span>
-                    <a href={pkg.image} target="_blank" rel="noreferrer">
-                      {t.openPdf}
-                    </a>
-                  </div>
-                ) : (
-                  <img src={pkg.image} alt={pkg.name} className="package-image" />
-                )
+              {coverUrl ? (
+                <div className="package-cover-wrap">
+                  <img src={coverUrl} alt={pkg.name} className="package-image" />
+                </div>
+              ) : showPlaceholder ? (
+                <div className="package-pdf-placeholder">
+                  <span>{t.packagePdfPlaceholder}</span>
+                </div>
               ) : null}
               <h3>{pkg.name}</h3>
-              <p className="package-country">{pkg.country}</p>
-              <p className="package-description">
-                {pkg.description || t.packageDescriptionFallback}
-              </p>
-              <div className="package-meta">
-                <span>{t.currencySymbol}{pkg.price}</span>
-                <span>{pkg.duration} {t.days}</span>
-              </div>
-              <button type="button" className="btn-secondary">
+              {hasCountry(pkg) ? <p className="package-country">{pkg.country}</p> : null}
+              {hasDescription(pkg) ? (
+                <p className="package-description">{pkg.description}</p>
+              ) : null}
+              {hasPrice(pkg) || hasDuration(pkg) ? (
+                <div className="package-meta">
+                  {hasPrice(pkg) ? (
+                    <span>
+                      {t.currencySymbol}
+                      {pkg.price}
+                    </span>
+                  ) : null}
+                  {hasDuration(pkg) ? (
+                    <span>
+                      {pkg.duration} {t.days}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+              <button
+                type="button"
+                className={`package-view-details ${pdfUrl ? "btn-primary" : "btn-secondary"}`}
+                disabled={!pdfUrl}
+                onClick={() => {
+                  if (!pdfUrl) return;
+                  window.open(pdfUrl, "_blank", "noopener,noreferrer");
+                }}
+              >
                 {t.viewDetails}
               </button>
             </article>
-          ))
+            );
+          })
         ) : !packagesError ? (
           <p className="empty-state">{t.noPackages}</p>
         ) : null}
