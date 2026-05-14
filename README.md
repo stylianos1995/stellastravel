@@ -19,7 +19,7 @@ They communicate over HTTP: the UI uses `fetch` through a small client in `src/a
 
 ### Stack
 
-- **Express** — HTTP API and middleware (JSON body parser, CORS).
+- **Express** — HTTP API and middleware (JSON body parser, explicit CORS headers for browsers).
 - **SQLite** (`server/data.db`) — Persistent storage. The file is created on first run; schema is applied in `initDb()`.
 - **jsonwebtoken** + **bcryptjs** — Admin login: password is verified against a hash; the API returns a JWT (lifetime configurable via `JWT_EXPIRES_IN`, default 30 days).
 - **multer** — File uploads (images or PDFs) stored under `server/uploads/`, exposed as static files at `/uploads/...`.

@@ -1,5 +1,4 @@
 const express = require("express");
-const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
 const sqlite3 = require("sqlite3").verbose();
@@ -52,43 +51,50 @@ const extraAllowedOrigins = (process.env.ALLOWED_ORIGINS || "")
   .filter(Boolean);
 
 /**
- * CORS: JWT is sent in Authorization, not cookies, so credentials mode is off.
- * Allow localhost + any *.vercel.app (production + preview URLs) + ALLOWED_ORIGINS.
+ * CORS without the `cors` package: Express 5 + preflight on Render is more reliable with explicit headers.
+ * JWT is in Authorization (not cookies). Allow localhost + *.vercel.app + ALLOWED_ORIGINS.
  */
-const corsOrigin = (origin, callback) => {
-  if (!origin) {
-    callback(null, true);
-    return;
-  }
-  if (extraAllowedOrigins.includes(origin)) {
-    callback(null, true);
-    return;
-  }
-  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)) {
-    callback(null, true);
-    return;
-  }
+function resolveAllowedOrigin(origin) {
+  const o = String(origin || "").trim();
+  if (!o) return null;
+  if (extraAllowedOrigins.includes(o)) return o;
+  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(o)) return o;
   try {
-    const { hostname, protocol } = new URL(origin);
-    if (protocol === "https:" && hostname.endsWith(".vercel.app")) {
-      callback(null, true);
-      return;
-    }
+    const u = new URL(o);
+    if (u.protocol === "https:" && u.hostname.endsWith(".vercel.app")) return o;
   } catch (_err) {
-    // ignore
+    return null;
   }
-  callback(null, false);
-};
+  return null;
+}
 
-app.use(
-  cors({
-    origin: corsOrigin,
-    credentials: false,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: ["Authorization", "Content-Type", "X-Requested-With"],
-    optionsSuccessStatus: 204,
-  })
-);
+app.use((req, res, next) => {
+  const origin = String(req.headers.origin || "").trim();
+  const allow = resolveAllowedOrigin(origin);
+
+  if (allow) {
+    res.setHeader("Access-Control-Allow-Origin", allow);
+    res.setHeader("Vary", "Origin");
+  }
+
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
+  const requestedHeaders = req.headers["access-control-request-headers"];
+  if (requestedHeaders) {
+    res.setHeader("Access-Control-Allow-Headers", requestedHeaders);
+  } else {
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Authorization, Content-Type, X-Requested-With"
+    );
+  }
+  res.setHeader("Access-Control-Max-Age", "86400");
+
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
+    return;
+  }
+  next();
+});
 app.use(express.json());
 app.use("/uploads", express.static(uploadsDir));
 
