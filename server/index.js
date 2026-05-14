@@ -45,12 +45,48 @@ const upload = multer({
   },
 });
 
+/** Extra allowed browser origins (comma-separated), e.g. your custom domain. */
+const extraAllowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+/**
+ * CORS: JWT is sent in Authorization, not cookies, so credentials mode is off.
+ * Allow localhost + any *.vercel.app (production + preview URLs) + ALLOWED_ORIGINS.
+ */
+const corsOrigin = (origin, callback) => {
+  if (!origin) {
+    callback(null, true);
+    return;
+  }
+  if (extraAllowedOrigins.includes(origin)) {
+    callback(null, true);
+    return;
+  }
+  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)) {
+    callback(null, true);
+    return;
+  }
+  try {
+    const { hostname, protocol } = new URL(origin);
+    if (protocol === "https:" && hostname.endsWith(".vercel.app")) {
+      callback(null, true);
+      return;
+    }
+  } catch (_err) {
+    // ignore
+  }
+  callback(null, false);
+};
+
 app.use(
   cors({
-    origin: true,
-    credentials: true,
+    origin: corsOrigin,
+    credentials: false,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Authorization", "Content-Type", "X-Requested-With"],
+    optionsSuccessStatus: 204,
   })
 );
 app.use(express.json());

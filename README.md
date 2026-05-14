@@ -35,6 +35,7 @@ Optional `.env` in the project root (loaded via `dotenv`):
 | `JWT_EXPIRES_IN` | Admin JWT lifetime (e.g. `12h`, `7d`, `30d`) | `30d`                                       |
 | `ADMIN_USERNAME` | Seed admin user                              | `admin`                                     |
 | `ADMIN_PASSWORD` | Seed admin password                          | `admin123`                                  |
+| `ALLOWED_ORIGINS` | Optional extra CORS origins (comma-separated), e.g. `https://stellastravel.com` | _(empty)_ — `https://*.vercel.app` and `http://localhost:*` are allowed by default |
 
 On first startup, if no row exists for `ADMIN_USERNAME`, an admin account is inserted with a bcrypt hash of `ADMIN_PASSWORD`.
 
@@ -179,7 +180,8 @@ If the dashboard shows different values, align them with `vercel.json` or leave 
 ### 4. API + CORS
 
 - Deploy `server/` elsewhere with HTTPS, strong `JWT_SECRET`, and real admin credentials.
-- Allow your Vercel origin in the API’s CORS config (e.g. `https://your-site.vercel.app` and your custom domain). Right now `server/index.js` uses permissive `origin: true`; for production, **restrict to your frontend origin(s)**.
+- The API allows **`https://*.vercel.app`** (production and preview) and **local dev** (`http://localhost`, `http://127.0.0.1` with any port). Add a **custom domain** via **`ALLOWED_ORIGINS`** on Render (comma-separated full origins, e.g. `https://stellastravel.com`).
+- JWT is sent in the **`Authorization`** header (not cookies), so the server uses **`credentials: false`** for CORS so browser preflights succeed.
 
 ### 5. Optional checks
 
