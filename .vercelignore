@@ -1,0 +1,3 @@
+# Local-only API artifacts (not needed for the static React build on Vercel)
+server/data.db
+server/uploads

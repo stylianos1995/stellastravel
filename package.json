@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "A travel agency website",
   "main": "index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",

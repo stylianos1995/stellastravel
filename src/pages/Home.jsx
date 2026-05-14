@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import heroWallpaper from "../assets/hero.png";
+import brandLogo from "../assets/logo.png";
 import WeeklyHours from "../components/WeeklyHours";
 import { partnerAgencies } from "../Data/partnerAgencies";
+
+const base = (process.env.PUBLIC_URL || "").replace(/\/$/, "");
+const STELLA_PROFILE_PATH = `${base}/stella-profile.jpg`;
 
 function partnerWebsiteHref(raw) {
   const s = String(raw ?? "").trim();
@@ -12,6 +16,9 @@ function partnerWebsiteHref(raw) {
 }
 
 const Home = ({ t }) => {
+  const [profileFallback, setProfileFallback] = useState(false);
+  const profileSrc = profileFallback ? brandLogo : STELLA_PROFILE_PATH;
+
   return (
     <section className="home">
       <div className="hero-section">
@@ -23,40 +30,33 @@ const Home = ({ t }) => {
       </div>
 
       <section className="about-us" id="about-us">
-        <div>
-          <p className="eyebrow">{t.aboutEyebrow}</p>
-          <h2>{t.aboutTitle}</h2>
-          <p>{t.aboutText}</p>
+        <div className="about-us-layout">
+          <div className="about-us-intro">
+            <p className="eyebrow">{t.aboutEyebrow}</p>
+            <h2>{t.aboutTitle}</h2>
+            <div className="about-us-body">
+              <p>{t.aboutBody1}</p>
+              <p>{t.aboutBody2}</p>
+            </div>
+          </div>
+          <figure className="about-us-profile">
+            <img
+              src={profileSrc}
+              alt={t.aboutProfileAlt}
+              className={`about-profile-img${profileFallback ? " about-profile-img--logo" : ""}`}
+              width={280}
+              height={280}
+              loading="lazy"
+              decoding="async"
+              onError={() => {
+                if (!profileFallback) setProfileFallback(true);
+              }}
+            />
+            <figcaption className="about-profile-caption" aria-hidden="true">
+              {t.aboutProfileCaption}
+            </figcaption>
+          </figure>
         </div>
-        <div className="about-us-facts">
-          <article>
-            <h3>{t.aboutFact1Title}</h3>
-            <p>{t.aboutFact1Text}</p>
-          </article>
-          <article>
-            <h3>{t.aboutFact2Title}</h3>
-            <p>{t.aboutFact2Text}</p>
-          </article>
-          <article>
-            <h3>{t.aboutFact3Title}</h3>
-            <p>{t.aboutFact3Text}</p>
-          </article>
-        </div>
-      </section>
-
-      <section className="highlights" id="why-us">
-        <article className="highlight-card">
-          <h3>{t.highlights1Title}</h3>
-          <p>{t.highlights1Text}</p>
-        </article>
-        <article className="highlight-card">
-          <h3>{t.highlights2Title}</h3>
-          <p>{t.highlights2Text}</p>
-        </article>
-        <article className="highlight-card">
-          <h3>{t.highlights3Title}</h3>
-          <p>{t.highlights3Text}</p>
-        </article>
       </section>
 
       {partnerAgencies.length > 0 ? (
@@ -68,6 +68,12 @@ const Home = ({ t }) => {
             {partnerAgencies.map((p, i) => {
               const href = partnerWebsiteHref(p.website);
               const key = `${p.name}-${i}`;
+              const logoEl =
+                p.logo != null ? (
+                  <span className="partner-logo-wrap">
+                    <img src={p.logo} alt="" className="partner-logo" />
+                  </span>
+                ) : null;
               if (href) {
                 return (
                   <li key={key}>
@@ -77,8 +83,8 @@ const Home = ({ t }) => {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
+                      {logoEl}
                       <span className="partner-name">{p.name}</span>
-                      <span className="partner-visit">{t.partnersVisitSite}</span>
                     </a>
                   </li>
                 );
@@ -86,6 +92,7 @@ const Home = ({ t }) => {
               return (
                 <li key={key}>
                   <span className="partner-card">
+                    {logoEl}
                     <span className="partner-name">{p.name}</span>
                   </span>
                 </li>

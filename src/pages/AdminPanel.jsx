@@ -9,6 +9,12 @@ import {
   updatePackage,
   uploadPackageAsset,
 } from "../api";
+import { formatTravelDateDisplay } from "../utils/formatTravelDateDisplay";
+import {
+  AirplaneCategoryIcon,
+  BoatCategoryIcon,
+  OtherCategoryIcon,
+} from "../components/TicketCategoryIcons";
 
 const emptyForm = {
   name: "",
@@ -267,6 +273,65 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
     return matchesQuery && matchesStatus;
   });
 
+  const airplaneTickets = filteredTickets.filter((item) => item.transport_type === "airplane");
+  const boatTickets = filteredTickets.filter((item) => item.transport_type === "boat");
+  const otherTickets = filteredTickets.filter(
+    (item) => item.transport_type !== "airplane" && item.transport_type !== "boat"
+  );
+
+  const renderTicketItem = (item, { showTransportType = false } = {}) => (
+    <article className={`admin-item ${item.is_checked ? "ticket-checked" : ""}`} key={item.id}>
+      <div>
+        <strong>
+          {item.first_name} {item.last_name}
+        </strong>
+        <p>
+          {showTransportType && item.transport_type ? `${item.transport_type} | ` : null}
+          {t.passengers}: {item.people_count}
+        </p>
+        <p>
+          {t.fromDestination}: {item.from_destination || "-"} | {t.toDestination}:{" "}
+          {item.to_destination || "-"}
+        </p>
+        <p>
+          {t.adults}: {item.adults_count ?? item.people_count ?? 0} | {t.children}:{" "}
+          {item.children_count ?? 0} | {t.babies}: {item.babies_count ?? 0}
+        </p>
+        {item.notes ? (
+          <p>
+            {t.notesDetails}: {item.notes}
+          </p>
+        ) : null}
+        <p>
+          {t.mobile}: {item.mobile_country_code} {item.mobile_number}
+        </p>
+        <p>
+          {t.travelDate}: {formatTravelDateDisplay(item.travel_date)}
+          {item.return_date
+            ? ` | ${t.returnDate}: ${formatTravelDateDisplay(item.return_date)}`
+            : ""}
+        </p>
+        <p>
+          {item.transport_type === "airplane"
+            ? `${t.withSuitcase}: ${item.airplane_luggage ? t.yes : t.no}`
+            : `${t.withCar}: ${item.boat_has_car ? t.yes : t.no}`}
+        </p>
+        <p>{t.adminRequestedAt}: {new Date(item.created_at).toLocaleString()}</p>
+        <p>
+          {t.status}: {item.is_checked ? t.ticketChecked : t.ticketPending}
+        </p>
+      </div>
+      <div className="admin-item-actions">
+        <button type="button" className="btn-secondary" onClick={() => handleTicketChecked(item.id)}>
+          {item.is_checked ? t.markUnchecked : t.markChecked}
+        </button>
+        <button type="button" className="btn-secondary" onClick={() => handleTicketDelete(item.id)}>
+          {t.adminDelete}
+        </button>
+      </div>
+    </article>
+  );
+
   return (
     <section className="admin-panel">
       <div className="section-header">
@@ -416,53 +481,39 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
                 </select>
               </div>
               {filteredTickets.length > 0 ? (
-                filteredTickets.map((item) => (
-                  <article className={`admin-item ${item.is_checked ? "ticket-checked" : ""}`} key={item.id}>
-                    <div>
-                      <strong>{item.first_name} {item.last_name}</strong>
-                      <p>
-                        {item.transport_type} | {t.passengers}: {item.people_count}
-                      </p>
-                      <p>
-                        {t.fromDestination}: {item.from_destination || "-"} | {t.toDestination}: {item.to_destination || "-"}
-                      </p>
-                      <p>
-                        {t.adults}: {item.adults_count ?? item.people_count ?? 0} | {t.children}: {item.children_count ?? 0} | {t.babies}: {item.babies_count ?? 0}
-                      </p>
-                      {item.notes ? <p>{t.notesDetails}: {item.notes}</p> : null}
-                      <p>{t.mobile}: {item.mobile_country_code} {item.mobile_number}</p>
-                      <p>
-                        {t.travelDate}: {item.travel_date}
-                        {item.return_date ? ` | ${t.returnDate}: ${item.return_date}` : ""}
-                      </p>
-                      <p>
-                        {item.transport_type === "airplane"
-                          ? `${t.withSuitcase}: ${item.airplane_luggage ? t.yes : t.no}`
-                          : `${t.withCar}: ${item.boat_has_car ? t.yes : t.no}`}
-                      </p>
-                      <p>{t.adminRequestedAt}: {new Date(item.created_at).toLocaleString()}</p>
-                      <p>
-                        {t.status}: {item.is_checked ? t.ticketChecked : t.ticketPending}
-                      </p>
+                <div className="admin-ticket-categories">
+                  <div className="admin-ticket-category">
+                    <h4 className="admin-ticket-category-title">
+                      <AirplaneCategoryIcon className="admin-ticket-category-icon" />
+                      <span>{t.airplane}</span>
+                    </h4>
+                    {airplaneTickets.length > 0 ? (
+                      airplaneTickets.map((item) => renderTicketItem(item))
+                    ) : (
+                      <p className="admin-ticket-category-empty">{t.adminTicketsNoneInCategory}</p>
+                    )}
+                  </div>
+                  <div className="admin-ticket-category">
+                    <h4 className="admin-ticket-category-title">
+                      <BoatCategoryIcon className="admin-ticket-category-icon" />
+                      <span>{t.boat}</span>
+                    </h4>
+                    {boatTickets.length > 0 ? (
+                      boatTickets.map((item) => renderTicketItem(item))
+                    ) : (
+                      <p className="admin-ticket-category-empty">{t.adminTicketsNoneInCategory}</p>
+                    )}
+                  </div>
+                  {otherTickets.length > 0 ? (
+                    <div className="admin-ticket-category">
+                      <h4 className="admin-ticket-category-title">
+                        <OtherCategoryIcon className="admin-ticket-category-icon" />
+                        <span>{t.adminTicketsCategoryOther}</span>
+                      </h4>
+                      {otherTickets.map((item) => renderTicketItem(item, { showTransportType: true }))}
                     </div>
-                    <div className="admin-item-actions">
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={() => handleTicketChecked(item.id)}
-                      >
-                        {item.is_checked ? t.markUnchecked : t.markChecked}
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={() => handleTicketDelete(item.id)}
-                      >
-                        {t.adminDelete}
-                      </button>
-                    </div>
-                  </article>
-                ))
+                  ) : null}
+                </div>
               ) : (
                 <p>{t.noTicketRequests}</p>
               )}

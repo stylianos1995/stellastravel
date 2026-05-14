@@ -149,6 +149,45 @@ Outputs static files to `build/`. Serve them with any static host (or your own s
 
 ---
 
+## Deploy the frontend on Vercel
+
+Vercel hosts the **Create React App build** (`build/`). The **Express + SQLite API is not run on Vercel** (no persistent SQLite disk in their model). Host the API on a VPS, Railway, Render, Fly.io, etc., then point the UI at it.
+
+### 1. Repo & project
+
+- Push this repo to GitHub (or GitLab / Bitbucket).
+- In [Vercel](https://vercel.com): **Add New → Project**, import the repo, root directory **`.`** (default).
+
+### 2. Environment variable (required for production)
+
+In the Vercel project: **Settings → Environment Variables**:
+
+| Name                 | Value (example)              | Apply to        |
+| -------------------- | ---------------------------- | --------------- |
+| `REACT_APP_API_URL`  | `https://your-api.com/api`   | Production (and Preview if you use a staging API) |
+
+CRA bakes this in at **build time**. After changing it, trigger **Redeploy** (Deployments → … → Redeploy).
+
+Use your real API base URL including the `/api` suffix (same shape as `src/api.js`).
+
+### 3. Build settings
+
+The repo includes **`vercel.json`**: `npm run build`, output **`build`**, and SPA **rewrites** so `/packages`, `/tickets`, `/admin` work on refresh.
+
+If the dashboard shows different values, align them with `vercel.json` or leave defaults if Vercel auto-detects Create React App.
+
+### 4. API + CORS
+
+- Deploy `server/` elsewhere with HTTPS, strong `JWT_SECRET`, and real admin credentials.
+- Allow your Vercel origin in the API’s CORS config (e.g. `https://your-site.vercel.app` and your custom domain). Right now `server/index.js` uses permissive `origin: true`; for production, **restrict to your frontend origin(s)**.
+
+### 5. Optional checks
+
+- **`public/stella-profile.jpg`** — add if you use the About photo (or the UI falls back to the logo).
+- If **`npm install` fails on Vercel** because of the native **`sqlite3`** package (only needed for the API, not for `react-scripts build`), fix by splitting client/server `package.json` later, or use an install workaround documented in Vercel issues; many builds succeed on Node 18/20.
+
+---
+
 ## Repository layout (reference)
 
 ```

@@ -11,9 +11,35 @@ const Footer = ({ t }) => {
 
         <section>
           <h4>{t.footerGeneral}</h4>
-          <ul className="footer-list">
+          <ul className="footer-list footer-contact-list">
             <li>{t.addressLabel}: Ιωάννη Χριστίδη 1, Πτολεμαΐδα 502 00, Ελλάδα</li>
-            <li>{t.phoneLabel}: +30 2463 028796</li>
+            <li className="footer-contact-line">
+              <span className="footer-contact-ico" aria-hidden="true">
+                ☎
+              </span>
+              <span>
+                {t.footerTelLabel}{" "}
+                <a href="tel:+302463028796">+30 2463028796</a>
+              </span>
+            </li>
+            <li className="footer-contact-line">
+              <span className="footer-contact-ico" aria-hidden="true">
+                📱
+              </span>
+              <span>
+                {t.footerMobLabel}{" "}
+                <a href="tel:+306984553773">+30 6984553773</a>
+              </span>
+            </li>
+            <li className="footer-contact-line">
+              <span className="footer-contact-ico" aria-hidden="true">
+                ✉
+              </span>
+              <span>
+                {t.footerEmailLabel}{" "}
+                <a href="mailto:estelsach@gmail.com">estelsach@gmail.com</a>
+              </span>
+            </li>
           </ul>
         </section>
 

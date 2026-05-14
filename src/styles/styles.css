@@ -201,12 +201,6 @@ body {
   opacity: 0.95;
 }
 
-.highlights {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
-}
-
 .location-reviews {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
@@ -251,13 +245,21 @@ body {
 }
 
 .about-us {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 20px;
   background: #ffffff;
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.about-us-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 280px);
+  gap: 28px;
+  align-items: start;
+}
+
+.about-us-intro {
+  min-width: 0;
 }
 
 .about-us h2 {
@@ -265,50 +267,54 @@ body {
   color: #0f172a;
 }
 
-.about-us > div > p {
+.about-us-body p {
   margin: 0;
   color: #334155;
-  line-height: 1.65;
+  line-height: 1.68;
+  font-size: 1.02rem;
 }
 
-.about-us-facts {
-  display: grid;
-  gap: 12px;
+.about-us-body p + p {
+  margin-top: 14px;
 }
 
-.about-us-facts article {
-  border: 1px solid #dbeafe;
-  border-radius: 12px;
-  padding: 14px;
-  background: #f8fbff;
-}
-
-.about-us-facts h3 {
-  margin: 0 0 6px;
-  color: #1d4ed8;
-}
-
-.about-us-facts p {
+.about-us-profile {
   margin: 0;
+  position: relative;
+  justify-self: end;
+  width: 100%;
+  max-width: 280px;
+}
+
+.about-profile-img {
+  display: block;
+  width: 100%;
+  max-width: min(280px, 100%);
+  height: auto;
+  aspect-ratio: 1 / 1;
+  margin-inline: auto;
+  object-fit: cover;
+  object-position: center 28%;
+  border-radius: 50%;
+  border: 3px solid #e2e8f0;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+  background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
+}
+
+.about-profile-img--logo {
+  object-fit: contain;
+  object-position: center;
+  padding: 22%;
+  background: #f8fafc;
+}
+
+.about-profile-caption {
+  margin: 10px 0 0;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: #475569;
-}
-
-.highlight-card {
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 22px;
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
-}
-
-.highlight-card h3 {
-  margin: 0 0 10px;
-  color: #1e3a8a;
-}
-
-.highlight-card p {
-  margin: 0;
-  color: #334155;
-  line-height: 1.5;
+  text-align: center;
+  line-height: 1.35;
 }
 
 .partners-section {
@@ -354,6 +360,25 @@ body {
   line-height: 1.35;
 }
 
+.partner-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 48px;
+  margin-bottom: 2px;
+}
+
+.partner-logo {
+  display: block;
+  max-width: 100%;
+  max-height: 48px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: left center;
+}
+
 .partner-card--link {
   text-decoration: none;
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
@@ -367,13 +392,6 @@ body {
 
 .partner-name {
   font-size: 1rem;
-}
-
-.partner-visit {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #2563eb;
-  letter-spacing: 0.02em;
 }
 
 .packages {
@@ -658,6 +676,44 @@ body {
   padding: 8px 10px;
 }
 
+.admin-ticket-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.admin-ticket-category-title {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #cbd5e1;
+}
+
+.admin-ticket-category-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: block;
+  object-fit: contain;
+  object-position: left center;
+  color: #2563eb;
+  opacity: 0.95;
+}
+
+.admin-ticket-category-empty {
+  margin: 0;
+  padding: 8px 0 4px;
+  color: #94a3b8;
+  font-size: 0.95rem;
+  font-style: italic;
+}
+
 .admin-item {
   display: flex;
   justify-content: space-between;
@@ -720,6 +776,15 @@ body {
 
 .ticket-travel-field {
   margin: 0;
+}
+
+.ticket-date-dmy {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #475569;
+  letter-spacing: 0.02em;
 }
 
 .ticket-return-check {
@@ -834,8 +899,8 @@ body {
 }
 
 .weekly-hours-section {
-  width: min(1120px, 92%);
-  margin: 0 auto 18px;
+  width: 100%;
+  margin: 0 0 18px;
 }
 
 .weekly-hours-card {
@@ -859,16 +924,23 @@ body {
 }
 
 .hours-list li {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  padding-bottom: 6px;
+  display: grid;
+  grid-template-columns: minmax(8.5rem, 11rem) minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 16px;
+  row-gap: 4px;
+  padding-bottom: 8px;
   border-bottom: 1px dashed #dbeafe;
   color: #334155;
 }
 
 .hours-list li span:first-child {
   font-weight: 600;
+}
+
+.hours-list li span:last-child {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
 }
 
 .hours-note {
@@ -910,6 +982,30 @@ body {
   gap: 8px;
 }
 
+.footer-contact-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.footer-contact-ico {
+  flex-shrink: 0;
+  width: 1.35em;
+  text-align: center;
+  line-height: 1.45;
+}
+
+.footer-contact-list a {
+  color: #bfdbfe;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.footer-contact-list a:hover {
+  text-decoration: underline;
+  color: #ffffff;
+}
+
 .social-links {
   display: grid;
   gap: 8px;
@@ -939,8 +1035,13 @@ body {
     padding: 34px 24px;
   }
 
-  .about-us {
+  .about-us-layout {
     grid-template-columns: 1fr;
+  }
+
+  .about-us-profile {
+    justify-self: center;
+    max-width: 260px;
   }
 
   .location-reviews {
@@ -952,8 +1053,12 @@ body {
   }
 
   .hours-list li {
-    flex-direction: column;
-    gap: 2px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 12px;
+  }
+
+  .hours-list li span:last-child {
+    text-align: end;
   }
 
   .admin-form {

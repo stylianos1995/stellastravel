@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { createTicketRequest } from "../api";
+import { formatTravelDateDisplay } from "../utils/formatTravelDateDisplay";
 
 const airplaneOptionsEn = [
   "Athens Airport (ATH)",
@@ -245,6 +246,9 @@ const TicketRequest = ({ t, lang }) => {
               onChange={handleTravelDateChange}
               required
             />
+            {formData.travelDate ? (
+              <span className="ticket-date-dmy">{formatTravelDateDisplay(formData.travelDate)}</span>
+            ) : null}
           </label>
           {formData.hasReturn ? (
             <label className="ticket-return-date">
@@ -256,6 +260,9 @@ const TicketRequest = ({ t, lang }) => {
                 onChange={(e) => setField("returnDate", e.target.value)}
                 required={formData.hasReturn}
               />
+              {formData.returnDate ? (
+                <span className="ticket-date-dmy">{formatTravelDateDisplay(formData.returnDate)}</span>
+              ) : null}
             </label>
           ) : null}
           <label className="checkbox-row ticket-return-check">
