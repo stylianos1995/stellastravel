@@ -35,7 +35,7 @@ Optional `.env` in the project root (loaded via `dotenv`):
 | `JWT_EXPIRES_IN` | Admin JWT lifetime (e.g. `12h`, `7d`, `30d`) | `30d`                                       |
 | `ADMIN_USERNAME` | Seed admin user                              | `admin`                                     |
 | `ADMIN_PASSWORD` | Seed admin password                          | `admin123`                                  |
-| `ALLOWED_ORIGINS` | Optional extra CORS origins (comma-separated), e.g. `https://stellastravel.com` | _(empty)_ — `https://*.vercel.app` and `http://localhost:*` are allowed by default |
+| `ACCESS_CONTROL_ALLOW_ORIGIN` | Optional fixed CORS origin (e.g. `https://stellastravel.vercel.app`). If unset, the API sends `Access-Control-Allow-Origin: *` so all Vercel preview URLs work. | `*` (wildcard) |
 
 On first startup, if no row exists for `ADMIN_USERNAME`, an admin account is inserted with a bcrypt hash of `ADMIN_PASSWORD`.
 
@@ -114,7 +114,7 @@ Errors return JSON with a `message` field when possible; `500` responses avoid l
 
 ## Running locally
 
-You need **Node.js** (matching the version your team uses for React 18 / CRA).
+You need **Node.js 20.x** (recommended; matches Render and avoids `sqlite3` native mismatches) or another version your team standardizes on for React 18 / CRA.
 
 1. **Install dependencies** (from the project root):
 
@@ -150,6 +150,23 @@ Outputs static files to `build/`. Serve them with any static host (or your own s
 
 ---
 
+## Deploy the API on Render
+
+If deploy logs show **`GLIBC_2.38' not found`** for `node_sqlite3.node`, Render’s Linux image is older than the **prebuilt** `sqlite3` binary that was installed (often when Render defaults to a very new **Node** such as 26).
+
+1. **Build Command:** `npm run render-build`  
+   Runs `npm install` with **`npm_config_build_from_source=true`** so `sqlite3` is **compiled on Render** against that host’s glibc.
+
+2. **Start Command:** `npm run server`
+
+3. **Node version:** This repo sets **`engines.node` to `20.x`** and includes **`.nvmrc`** (`20`) so Render tends to use an **LTS Node 20** runtime instead of Node 26.
+
+4. After changing build settings or `package.json`, use **Clear build cache & deploy** once if a bad dependency layer was cached.
+
+If the dashboard still picks the wrong Node version, add an environment variable **`NODE_VERSION`** = **`20.18.1`** (or another current 20.x).
+
+---
+
 ## Deploy the frontend on Vercel
 
 Vercel hosts the **Create React App build** (`build/`). The **Express + SQLite API is not run on Vercel** (no persistent SQLite disk in their model). Host the API on a VPS, Railway, Render, Fly.io, etc., then point the UI at it.
@@ -180,8 +197,8 @@ If the dashboard shows different values, align them with `vercel.json` or leave 
 ### 4. API + CORS
 
 - Deploy `server/` elsewhere with HTTPS, strong `JWT_SECRET`, and real admin credentials.
-- The API allows **`https://*.vercel.app`** (production and preview) and **local dev** (`http://localhost`, `http://127.0.0.1` with any port). Add a **custom domain** via **`ALLOWED_ORIGINS`** on Render (comma-separated full origins, e.g. `https://stellastravel.com`).
-- JWT is sent in the **`Authorization`** header (not cookies), so the server uses **`credentials: false`** for CORS so browser preflights succeed.
+- By default the API sends **`Access-Control-Allow-Origin: *`** so **every Vercel preview URL** works without redeploying Render. Your app does **not** use cookie credentials for the API (JWT in `Authorization`), so `*` is acceptable for getting unblocked.
+- To lock to one site later, set **`ACCESS_CONTROL_ALLOW_ORIGIN`** on Render to that exact origin (then preview URLs must match or you keep `*` until you use a stable production domain).
 
 ### 5. Optional checks
 

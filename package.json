@@ -4,13 +4,14 @@
   "description": "A travel agency website",
   "main": "index.js",
   "engines": {
-    "node": ">=18.0.0"
+    "node": "20.x"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "dev": "react-scripts start",
-    "server": "node server/index.js"
+    "server": "node server/index.js",
+    "render-build": "npm_config_build_from_source=true npm install"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

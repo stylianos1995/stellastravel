@@ -44,36 +44,23 @@ const upload = multer({
   },
 });
 
-/** Extra allowed browser origins (comma-separated), e.g. your custom domain. */
-const extraAllowedOrigins = (process.env.ALLOWED_ORIGINS || "")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
-
 /**
- * CORS without the `cors` package: Express 5 + preflight on Render is more reliable with explicit headers.
- * JWT is in Authorization (not cookies). Allow localhost + *.vercel.app + ALLOWED_ORIGINS.
+ * CORS: explicit headers (no `cors` package). JWT is in Authorization, not cookies.
+ *
+ * Default `Access-Control-Allow-Origin: *` so every Vercel preview URL works without
+ * redeploying the API. Tighten with ACCESS_CONTROL_ALLOW_ORIGIN=https://your-prod-site.vercel.app
+ * (then only that origin is allowed; previews need that env updated or a second API).
  */
-function resolveAllowedOrigin(origin) {
-  const o = String(origin || "").trim();
-  if (!o) return null;
-  if (extraAllowedOrigins.includes(o)) return o;
-  if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(o)) return o;
-  try {
-    const u = new URL(o);
-    if (u.protocol === "https:" && u.hostname.endsWith(".vercel.app")) return o;
-  } catch (_err) {
-    return null;
-  }
-  return null;
-}
+const allowOriginHeader = () => {
+  const fixed = String(process.env.ACCESS_CONTROL_ALLOW_ORIGIN || "").trim();
+  return fixed || "*";
+};
 
 app.use((req, res, next) => {
-  const origin = String(req.headers.origin || "").trim();
-  const allow = resolveAllowedOrigin(origin);
+  const allowOrigin = allowOriginHeader();
 
-  if (allow) {
-    res.setHeader("Access-Control-Allow-Origin", allow);
+  res.setHeader("Access-Control-Allow-Origin", allowOrigin);
+  if (allowOrigin !== "*") {
     res.setHeader("Vary", "Origin");
   }
 
@@ -541,8 +528,14 @@ app.delete("/api/packages/:id", authenticateToken, async (req, res) => {
   res.status(204).send();
 });
 
-app.use((err, _req, res, _next) => {
+app.use((err, req, res, _next) => {
   console.error(err);
+  if (!res.headersSent) {
+    res.setHeader("Access-Control-Allow-Origin", allowOriginHeader());
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
+    const rh = req.headers["access-control-request-headers"];
+    res.setHeader("Access-Control-Allow-Headers", rh || "Authorization, Content-Type, X-Requested-With");
+  }
   if (err && err.code === "SQLITE_BUSY") {
     res.status(503).json({ message: "Database busy. Please retry in a moment." });
     return;
