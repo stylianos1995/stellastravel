@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import heroWallpaper from "../assets/hero.png";
 import brandLogo from "../assets/logo.png";
+import stellaProfile from "../assets/Stella.png";
 import WeeklyHours from "../components/WeeklyHours";
 import { partnerAgencies } from "../Data/partnerAgencies";
-
-const base = (process.env.PUBLIC_URL || "").replace(/\/$/, "");
-const STELLA_PROFILE_PATH = `${base}/stella-profile.jpg`;
 
 function partnerWebsiteHref(raw) {
   const s = String(raw ?? "").trim();
@@ -17,7 +15,7 @@ function partnerWebsiteHref(raw) {
 
 const Home = ({ t }) => {
   const [profileFallback, setProfileFallback] = useState(false);
-  const profileSrc = profileFallback ? brandLogo : STELLA_PROFILE_PATH;
+  const profileSrc = profileFallback ? brandLogo : stellaProfile;
 
   return (
     <section className="home">
@@ -40,21 +38,21 @@ const Home = ({ t }) => {
             </div>
           </div>
           <figure className="about-us-profile">
-            <img
-              src={profileSrc}
-              alt={t.aboutProfileAlt}
-              className={`about-profile-img${profileFallback ? " about-profile-img--logo" : ""}`}
-              width={280}
-              height={280}
-              loading="lazy"
-              decoding="async"
-              onError={() => {
-                if (!profileFallback) setProfileFallback(true);
-              }}
-            />
-            <figcaption className="about-profile-caption" aria-hidden="true">
-              {t.aboutProfileCaption}
-            </figcaption>
+            <div
+              className={`about-profile-frame${profileFallback ? " about-profile-frame--logo" : ""}`}
+            >
+              <img
+                src={profileSrc}
+                alt={t.aboutProfileAlt}
+                className="about-profile-img"
+                loading="lazy"
+                decoding="async"
+                onError={() => {
+                  if (!profileFallback) setProfileFallback(true);
+                }}
+              />
+            </div>
+            <figcaption className="about-profile-caption">{t.aboutProfileCaption}</figcaption>
           </figure>
         </div>
       </section>

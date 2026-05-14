@@ -29,8 +29,8 @@ const translations = {
       "Stella's Travel began as a small local business for everyone who wants tickets, routes, and paperwork handled with ease—not stress. A quarter-century beside airlines, ferries, and coach operators means we already know who delivers on the ground, at sea, and in the air, and we still push for the best outcome on every request.",
     aboutBody2:
       "You will not disappear into the anonymity of a giant call centre here. We care: you get direct answers, honest guidance, and the warm, personal service that only comes from people who remember why they opened their doors in the first place.",
-    aboutProfileAlt: "Stella, founder of Stella's Travel Agency",
-    aboutProfileCaption: "Stella — Stella's Travel Agency",
+    aboutProfileAlt: "Stella Sachpatzidou, founder of Stella's Travel Agency",
+    aboutProfileCaption: "Stella Sachpatzidou",
     partnersEyebrow: "Our network",
     partnersTitle: "Partner travel agencies",
     partnersIntro:
@@ -190,8 +190,8 @@ const translations = {
       "Το Stella's Travel ξεκίνησε ως μικρή τοπική επιχείρηση για όσους θέλουν εισιτήρια, δρομολόγια και χαρτιά να οργανώνονται με άνεση—χωρίς άγχος. Είκοσι πέντε χρόνια δίπλα σε αεροπορικές γραμμές, πλοία και λεωφορεία σημαίνει ότι ξέρουμε ποιοι συνεργάτες είναι οι καλύτεροι στην πράξη και εξακολουθούμε να διεκδικούμε το καλύτερο αποτέλεσμα για κάθε αίτημα.",
     aboutBody2:
       "Δεν θα «χαθείτε» στην ανωνυμία ενός μεγάλου τηλεφωνικού κέντρου. Μας νοιάζει: παίρνετε άμεσες απαντήσεις, ειλικρινή καθοδήγηση και προσωπική εξυπηρέτηση από ανθρώπους που θυμούνται γιατί άνοιξαν την πόρτα τους από την πρώτη μέρα.",
-    aboutProfileAlt: "Η Στέλλα, ιδρύτρια του Stella's Travel Agency",
-    aboutProfileCaption: "Στέλλα — Stella's Travel Agency",
+    aboutProfileAlt: "Η Στέλλα Σαχπατζίδου, ιδρύτρια του Stella's Travel Agency",
+    aboutProfileCaption: "Στέλλα Σαχπατζίδου",
     partnersEyebrow: "Το δίκτυό μας",
     partnersTitle: "Συνεργαζόμενα ταξιδιωτικά γραφεία",
     partnersIntro:

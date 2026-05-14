@@ -286,26 +286,35 @@ body {
   max-width: 280px;
 }
 
-.about-profile-img {
-  display: block;
-  width: 100%;
-  max-width: min(280px, 100%);
-  height: auto;
+/* Square frame + overflow keeps the portrait circular without stretching (not a JPEG quality issue). */
+.about-profile-frame {
+  width: min(280px, 100%);
   aspect-ratio: 1 / 1;
   margin-inline: auto;
-  object-fit: cover;
-  object-position: center 28%;
   border-radius: 50%;
+  overflow: hidden;
   border: 3px solid #e2e8f0;
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
   background: linear-gradient(145deg, #f1f5f9, #e2e8f0);
 }
 
-.about-profile-img--logo {
+.about-profile-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 22%;
+}
+
+.about-profile-frame--logo {
+  background: #f8fafc;
+}
+
+.about-profile-frame--logo .about-profile-img {
   object-fit: contain;
   object-position: center;
   padding: 22%;
-  background: #f8fafc;
+  box-sizing: border-box;
 }
 
 .about-profile-caption {
