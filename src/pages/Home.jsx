@@ -61,7 +61,6 @@ const Home = ({ t }) => {
         <section className="partners-section" id="partners" aria-labelledby="partners-heading">
           <p className="eyebrow">{t.partnersEyebrow}</p>
           <h2 id="partners-heading">{t.partnersTitle}</h2>
-          <p className="partners-intro">{t.partnersIntro}</p>
           <ul className="partners-grid">
             {partnerAgencies.map((p, i) => {
               const href = partnerWebsiteHref(p.website);

@@ -35,17 +35,82 @@ svg {
   max-width: 100%;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .navbar {
   background: #0b2a4a;
   color: #f8fafc;
-  padding: 16px 4%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 0;
   box-shadow: 0 6px 24px rgba(2, 6, 23, 0.18);
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 40;
+  overflow: visible;
+}
+
+.navbar-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 4%;
+}
+
+.nav-burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid rgba(191, 219, 254, 0.45);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.nav-burger-bar {
+  display: block;
+  width: 20px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.navbar--open .nav-burger-bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.navbar--open .nav-burger-bar:nth-child(2) {
+  opacity: 0;
+}
+
+.navbar--open .nav-burger-bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.nav-panel {
+  flex: 0 0 auto;
 }
 
 .brand-wrap {
@@ -53,6 +118,9 @@ svg {
   align-items: center;
   gap: 12px;
   min-width: 0;
+  text-decoration: none;
+  position: relative;
+  z-index: 1;
 }
 
 .brand-logo-wrap {
@@ -373,15 +441,8 @@ svg {
 }
 
 .partners-section h2 {
-  margin: 6px 0 10px;
+  margin: 6px 0 18px;
   color: #0f172a;
-}
-
-.partners-intro {
-  margin: 0 0 18px;
-  max-width: 720px;
-  color: #475569;
-  line-height: 1.55;
 }
 
 .partners-grid {
@@ -1521,49 +1582,77 @@ body.cookie-banner-open .page-content {
 }
 
 @media (max-width: 760px) {
-  .navbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    padding: 12px clamp(12px, 4vw, 16px);
-  }
-
-  .brand-wrap {
-    justify-content: center;
-    text-align: center;
-  }
-
-  .brand-logo-wrap {
-    width: 48px;
-    height: 48px;
-  }
-
-  .brand-logo {
-    transform: scale(1.3);
+  .navbar-inner {
+    position: relative;
+    padding: 8px clamp(12px, 4vw, 16px);
+    min-height: 56px;
   }
 
   .brand-title {
-    font-size: clamp(0.95rem, 4.2vw, 1.05rem);
-    line-height: 1.3;
+    display: none;
+  }
+
+  .brand-logo-wrap {
+    width: 44px;
+    height: 44px;
+  }
+
+  .brand-logo {
+    transform: scale(1.28);
+  }
+
+  .nav-burger {
+    display: flex;
+  }
+
+  .nav-panel {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 5;
+    background: #0b2a4a;
+    border-top: 1px solid rgba(191, 219, 254, 0.2);
+    box-shadow: 0 12px 24px rgba(2, 6, 23, 0.25);
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transition: max-height 0.28s ease, opacity 0.2s ease;
+  }
+
+  .nav-panel--open {
+    max-height: min(80vh, 420px);
+    opacity: 1;
+    pointer-events: auto;
+    overflow-y: auto;
   }
 
   .nav-links {
-    justify-content: center;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
     width: 100%;
+    padding: 10px clamp(12px, 4vw, 16px) 14px;
   }
 
   .nav-links li {
-    flex: 1 1 calc(50% - 4px);
-    min-width: 0;
+    flex: none;
+    width: 100%;
   }
 
   .nav-links a,
   .nav-links .lang-switch {
     display: block;
     width: 100%;
-    text-align: center;
-    padding: 10px 8px;
-    font-size: 0.9rem;
+    text-align: left;
+    padding: 12px 14px;
+    font-size: 0.95rem;
+    border-radius: 10px;
+  }
+
+  body.nav-menu-open {
+    overflow: hidden;
   }
 
   .global-lang-switch {
@@ -1757,10 +1846,6 @@ body.cookie-banner-open .page-content {
 }
 
 @media (max-width: 380px) {
-  .nav-links li {
-    flex: 1 1 100%;
-  }
-
   .admin-item-actions .btn-secondary {
     flex: 1 1 100%;
   }
