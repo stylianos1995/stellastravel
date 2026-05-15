@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const Footer = ({ t }) => {
   return (
@@ -56,15 +57,15 @@ const Footer = ({ t }) => {
             >
               Facebook
             </a>
-            <a href="https://x.com" target="_blank" rel="noreferrer">
-              X / Twitter
-            </a>
           </div>
         </section>
       </div>
 
       <p className="footer-copy">
-        © {new Date().getFullYear()} Stella's Travel Agency. {t.rights}
+        © {new Date().getFullYear()} Stella's Travel Agency. {t.rights}{" "}
+        <Link to="/privacy" className="footer-legal-link">
+          {t.footerPrivacy}
+        </Link>
       </p>
     </footer>
   );

@@ -1,15 +1,19 @@
 import React, { useEffect, useState } from "react";
 import {
   createPackage,
+  deletePackageInquiry,
   deleteTicketRequest,
   deletePackage,
+  getPackageInquiries,
   getTicketRequests,
   loginAdmin,
+  markPackageInquiryChecked,
   markTicketRequestChecked,
   updatePackage,
   uploadPackageAsset,
 } from "../api";
 import { formatTravelDateDisplay } from "../utils/formatTravelDateDisplay";
+import { isAdminRequestOverdue } from "../utils/isAdminRequestOverdue";
 import {
   AirplaneCategoryIcon,
   BoatCategoryIcon,
@@ -35,21 +39,29 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
   const [formError, setFormError] = useState("");
   const [uploadStatus, setUploadStatus] = useState("");
   const [ticketRequests, setTicketRequests] = useState([]);
+  const [packageInquiries, setPackageInquiries] = useState([]);
   const [activeSection, setActiveSection] = useState("packages");
   const [ticketQuery, setTicketQuery] = useState("");
   const [ticketStatusFilter, setTicketStatusFilter] = useState("all");
+  const [inquiryQuery, setInquiryQuery] = useState("");
+  const [inquiryStatusFilter, setInquiryStatusFilter] = useState("all");
+
+  const loadInbox = async (authToken) => {
+    try {
+      const [tickets, inquiries] = await Promise.all([
+        getTicketRequests(authToken),
+        getPackageInquiries(authToken),
+      ]);
+      setTicketRequests(tickets);
+      setPackageInquiries(inquiries);
+    } catch (_err) {
+      // Keep page usable even if inbox fetch fails.
+    }
+  };
 
   useEffect(() => {
     if (!token) return;
-    const loadTickets = async () => {
-      try {
-        const tickets = await getTicketRequests(token);
-        setTicketRequests(tickets);
-      } catch (_err) {
-        // Keep page usable even if ticket fetch fails.
-      }
-    };
-    loadTickets();
+    loadInbox(token);
   }, [token]);
 
   const handleChange = (field, value) => {
@@ -140,8 +152,7 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
       const result = await loginAdmin(authForm.username.trim(), authForm.password);
       localStorage.setItem("stella_admin_token", result.token);
       setToken(result.token);
-      const tickets = await getTicketRequests(result.token);
-      setTicketRequests(tickets);
+      await loadInbox(result.token);
       setAuthError("");
       setAuthForm({ username: "", password: "" });
     } catch (_err) {
@@ -197,6 +208,9 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
   };
 
   const handleLogout = () => {
+    if (!window.confirm(t.adminLogoutConfirm)) {
+      return;
+    }
     localStorage.removeItem("stella_admin_token");
     setToken("");
     resetForm();
@@ -219,6 +233,28 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
     try {
       await deleteTicketRequest(id, token);
       setTicketRequests((prev) => prev.filter((item) => item.id !== id));
+    } catch (err) {
+      setFormError(err.message);
+    }
+  };
+
+  const handleInquiryChecked = async (id) => {
+    try {
+      const current = packageInquiries.find((item) => item.id === id);
+      const updated = await markPackageInquiryChecked(id, !Boolean(current?.is_checked), token);
+      setPackageInquiries((prev) => prev.map((item) => (item.id === id ? updated : item)));
+    } catch (err) {
+      setFormError(err.message);
+    }
+  };
+
+  const handleInquiryDelete = async (id) => {
+    if (!window.confirm(t.packageInquiryDeleteConfirm)) {
+      return;
+    }
+    try {
+      await deletePackageInquiry(id, token);
+      setPackageInquiries((prev) => prev.filter((item) => item.id !== id));
     } catch (err) {
       setFormError(err.message);
     }
@@ -279,9 +315,32 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
     (item) => item.transport_type !== "airplane" && item.transport_type !== "boat"
   );
 
-  const renderTicketItem = (item, { showTransportType = false } = {}) => (
-    <article className={`admin-item ${item.is_checked ? "ticket-checked" : ""}`} key={item.id}>
+  const pendingTicketCount = ticketRequests.filter((item) => !item.is_checked).length;
+  const pendingInquiryCount = packageInquiries.filter((item) => !item.is_checked).length;
+
+  const filteredInquiries = packageInquiries.filter((item) => {
+    const query = inquiryQuery.trim().toLowerCase();
+    const matchesQuery =
+      !query ||
+      `${item.first_name} ${item.last_name}`.toLowerCase().includes(query) ||
+      `${item.mobile_country_code} ${item.mobile_number}`.toLowerCase().includes(query) ||
+      String(item.package_name || "").toLowerCase().includes(query);
+    const matchesStatus =
+      inquiryStatusFilter === "all" ||
+      (inquiryStatusFilter === "checked" && Boolean(item.is_checked)) ||
+      (inquiryStatusFilter === "pending" && !item.is_checked);
+    return matchesQuery && matchesStatus;
+  });
+
+  const renderTicketItem = (item, { showTransportType = false } = {}) => {
+    const overdue = isAdminRequestOverdue(item);
+    return (
+    <article
+      className={`admin-item ${item.is_checked ? "ticket-checked" : ""}${overdue ? " ticket-overdue" : ""}`}
+      key={item.id}
+    >
       <div>
+        {overdue ? <p className="ticket-overdue-badge">{t.ticketOverdue}</p> : null}
         <strong>
           {item.first_name} {item.last_name}
         </strong>
@@ -318,7 +377,14 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
         </p>
         <p>{t.adminRequestedAt}: {new Date(item.created_at).toLocaleString()}</p>
         <p>
-          {t.status}: {item.is_checked ? t.ticketChecked : t.ticketPending}
+          {t.status}:{" "}
+          {overdue ? (
+            <span className="ticket-overdue-label">{t.ticketOverdue}</span>
+          ) : item.is_checked ? (
+            t.ticketChecked
+          ) : (
+            t.ticketPending
+          )}
         </p>
       </div>
       <div className="admin-item-actions">
@@ -330,7 +396,8 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
         </button>
       </div>
     </article>
-  );
+    );
+  };
 
   return (
     <section className="admin-panel">
@@ -342,28 +409,38 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
 
       <div className="admin-dashboard">
         <aside className="admin-sidebar">
-          <div className="admin-stats">
-            <div className="admin-stat"><span>{t.adminStatsPackages}</span><strong>{packages.length}</strong></div>
-            <div className="admin-stat"><span>{t.adminStatsTickets}</span><strong>{ticketRequests.length}</strong></div>
-            <div className="admin-stat"><span>{t.adminStatsPending}</span><strong>{ticketRequests.filter((i) => !i.is_checked).length}</strong></div>
-          </div>
+          <nav className="admin-nav" aria-label={t.adminTitle}>
           <button
             type="button"
             className={`admin-side-btn ${activeSection === "packages" ? "active" : ""}`}
             onClick={() => setActiveSection("packages")}
           >
-            {t.adminSectionPackages}
+            {t.adminNavAddPackage}
           </button>
           <button
             type="button"
             className={`admin-side-btn ${activeSection === "tickets" ? "active" : ""}`}
             onClick={() => setActiveSection("tickets")}
           >
-            {t.adminSectionTickets}
+            <span>{t.adminNavTicketRequests}</span>
+            <span className="admin-nav-badge" aria-label={t.adminNavPendingCount}>
+              {pendingTicketCount}
+            </span>
           </button>
-          <button type="button" className="admin-side-btn" onClick={handleLogout}>
+          <button
+            type="button"
+            className={`admin-side-btn ${activeSection === "packageInquiries" ? "active" : ""}`}
+            onClick={() => setActiveSection("packageInquiries")}
+          >
+            <span>{t.adminNavPackageInquiries}</span>
+            <span className="admin-nav-badge" aria-label={t.adminNavPendingCount}>
+              {pendingInquiryCount}
+            </span>
+          </button>
+          <button type="button" className="admin-side-btn admin-side-btn--logout" onClick={handleLogout}>
             {t.adminLogout}
           </button>
+          </nav>
         </aside>
 
         <div className="admin-content">
@@ -465,7 +542,7 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
                 ))}
               </div>
             </>
-          ) : (
+          ) : activeSection === "tickets" ? (
             <div className="admin-list">
               <h3>{t.adminTicketRequests}</h3>
               <div className="admin-ticket-tools">
@@ -516,6 +593,86 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
                 </div>
               ) : (
                 <p>{t.noTicketRequests}</p>
+              )}
+            </div>
+          ) : (
+            <div className="admin-list">
+              <h3>{t.adminPackageInquiries}</h3>
+              <div className="admin-ticket-tools">
+                <input
+                  placeholder={t.adminSearchPackageInquiries}
+                  value={inquiryQuery}
+                  onChange={(e) => setInquiryQuery(e.target.value)}
+                />
+                <select
+                  value={inquiryStatusFilter}
+                  onChange={(e) => setInquiryStatusFilter(e.target.value)}
+                >
+                  <option value="all">{t.all}</option>
+                  <option value="pending">{t.ticketPending}</option>
+                  <option value="checked">{t.ticketChecked}</option>
+                </select>
+              </div>
+              {filteredInquiries.length > 0 ? (
+                filteredInquiries.map((item) => (
+                  <article
+                    className={`admin-item ${item.is_checked ? "ticket-checked" : ""}`}
+                    key={item.id}
+                  >
+                    <div>
+                      <strong>
+                        {item.first_name} {item.last_name}
+                      </strong>
+                      <p>
+                        {t.inquiryPackageLabel}: {item.package_name}
+                      </p>
+                      <p>
+                        {t.passengers}: {item.people_count} ({t.adults}: {item.adults_count ?? 0} |{" "}
+                        {t.children}: {item.children_count ?? 0} | {t.babies}: {item.babies_count ?? 0})
+                      </p>
+                      {item.preferred_travel_date ? (
+                        <p>
+                          {t.preferredTravelDate}: {formatTravelDateDisplay(item.preferred_travel_date)}
+                        </p>
+                      ) : null}
+                      {item.email ? (
+                        <p>
+                          {t.email}: {item.email}
+                        </p>
+                      ) : null}
+                      {item.notes ? (
+                        <p>
+                          {t.notesDetails}: {item.notes}
+                        </p>
+                      ) : null}
+                      <p>
+                        {t.mobile}: {item.mobile_country_code} {item.mobile_number}
+                      </p>
+                      <p>{t.adminRequestedAt}: {new Date(item.created_at).toLocaleString()}</p>
+                      <p>
+                        {t.status}: {item.is_checked ? t.ticketChecked : t.ticketPending}
+                      </p>
+                    </div>
+                    <div className="admin-item-actions">
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => handleInquiryChecked(item.id)}
+                      >
+                        {item.is_checked ? t.markUnchecked : t.markChecked}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => handleInquiryDelete(item.id)}
+                      >
+                        {t.adminDelete}
+                      </button>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <p>{t.noPackageInquiries}</p>
               )}
             </div>
           )}

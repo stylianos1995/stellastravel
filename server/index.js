@@ -230,6 +230,27 @@ const initDb = async () => {
 
   await ensureColumn("packages", "pdf_url", "TEXT DEFAULT ''");
 
+  await run(`
+    CREATE TABLE IF NOT EXISTS package_inquiries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      package_id INTEGER NOT NULL,
+      package_name TEXT NOT NULL,
+      first_name TEXT NOT NULL,
+      last_name TEXT NOT NULL,
+      mobile_country_code TEXT NOT NULL,
+      mobile_number TEXT NOT NULL,
+      email TEXT DEFAULT '',
+      preferred_travel_date TEXT DEFAULT '',
+      adults_count INTEGER DEFAULT 1,
+      children_count INTEGER DEFAULT 0,
+      babies_count INTEGER DEFAULT 0,
+      people_count INTEGER NOT NULL,
+      notes TEXT DEFAULT '',
+      is_checked INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL
+    )
+  `);
+
   const admin = await get("SELECT id FROM admins WHERE username = ?", [ADMIN_USERNAME]);
   if (!admin) {
     const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
@@ -248,6 +269,42 @@ const initDb = async () => {
       );
     }
   }
+
+  // Demo overdue ticket (unchecked, 8+ days old) — delete from Admin when done previewing.
+  const demoOverdueTicket = await get(
+    "SELECT id FROM ticket_requests WHERE first_name = ? AND last_name = ?",
+    ["Demo", "Overdue"]
+  );
+  if (!demoOverdueTicket && process.env.SEED_DEMO_OVERDUE_TICKET !== "false") {
+    const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
+    const travelDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    await run(
+      `INSERT INTO ticket_requests
+      (first_name, last_name, date_of_birth, travel_date, return_date, from_destination, to_destination, transport_type, people_count, adults_count, children_count, babies_count, notes, mobile_country_code, mobile_number, airplane_luggage, boat_has_car, created_at, is_checked)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        "Demo",
+        "Overdue",
+        "1990-05-15",
+        travelDate,
+        "",
+        "Athens Airport (ATH)",
+        "Thessaloniki Airport (SKG)",
+        "airplane",
+        2,
+        2,
+        0,
+        0,
+        "Demo ticket for overdue styling — safe to delete from Admin.",
+        "+30",
+        "6900000000",
+        1,
+        null,
+        eightDaysAgo,
+        0,
+      ]
+    );
+  }
 };
 
 app.get("/api/health", (_req, res) => {
@@ -257,7 +314,12 @@ app.get("/api/health", (_req, res) => {
 app.get("/", (_req, res) => {
   res.json({
     message: "Stella API is running.",
-    endpoints: ["/api/health", "/api/auth/login", "/api/packages"],
+    endpoints: [
+      "/api/health",
+      "/api/auth/login",
+      "/api/packages",
+      "/api/package-inquiries",
+    ],
   });
 });
 
@@ -362,6 +424,127 @@ app.post("/api/tickets", async (req, res, next) => {
 
     const created = await get("SELECT * FROM ticket_requests WHERE id = ?", [result.lastID]);
     res.status(201).json(created);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/package-inquiries", async (req, res, next) => {
+  try {
+    const {
+      packageId,
+      packageName,
+      firstName,
+      lastName,
+      mobileCountryCode,
+      mobileNumber,
+      email = "",
+      preferredTravelDate = "",
+      adultsCount = 1,
+      childrenCount = 0,
+      babiesCount = 0,
+      notes = "",
+    } = req.body || {};
+
+    const adults = Number(adultsCount);
+    const children = Number(childrenCount);
+    const babies = Number(babiesCount);
+    const peopleCount = adults + children + babies;
+
+    if (
+      !packageId ||
+      !firstName ||
+      !lastName ||
+      !mobileCountryCode ||
+      !mobileNumber ||
+      peopleCount < 1
+    ) {
+      res.status(400).json({ message: "Missing required package inquiry fields." });
+      return;
+    }
+
+    const pkg = await get("SELECT id, name FROM packages WHERE id = ?", [Number(packageId)]);
+    if (!pkg) {
+      res.status(404).json({ message: "Package not found." });
+      return;
+    }
+
+    const snapshotName = String(packageName || pkg.name).trim() || pkg.name;
+
+    const result = await run(
+      `INSERT INTO package_inquiries
+      (package_id, package_name, first_name, last_name, mobile_country_code, mobile_number, email, preferred_travel_date, adults_count, children_count, babies_count, people_count, notes, is_checked, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        pkg.id,
+        snapshotName,
+        String(firstName).trim(),
+        String(lastName).trim(),
+        String(mobileCountryCode).trim(),
+        String(mobileNumber).trim(),
+        String(email || "").trim(),
+        String(preferredTravelDate || ""),
+        adults,
+        children,
+        babies,
+        peopleCount,
+        String(notes || "").trim(),
+        0,
+        new Date().toISOString(),
+      ]
+    );
+
+    const created = await get("SELECT * FROM package_inquiries WHERE id = ?", [result.lastID]);
+    res.status(201).json(created);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/package-inquiries", authenticateToken, async (req, res, next) => {
+  try {
+    const rows = await all("SELECT * FROM package_inquiries ORDER BY id DESC");
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.put("/api/package-inquiries/:id/check", authenticateToken, async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const current = await get("SELECT * FROM package_inquiries WHERE id = ?", [id]);
+    if (!current) {
+      res.status(404).json({ message: "Package inquiry not found." });
+      return;
+    }
+
+    const checked = Boolean(req.body?.checked);
+    const result = await run("UPDATE package_inquiries SET is_checked = ? WHERE id = ?", [
+      checked ? 1 : 0,
+      id,
+    ]);
+    if (!result.changes) {
+      res.status(404).json({ message: "Package inquiry not found." });
+      return;
+    }
+
+    const updated = await get("SELECT * FROM package_inquiries WHERE id = ?", [id]);
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.delete("/api/package-inquiries/:id", authenticateToken, async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const result = await run("DELETE FROM package_inquiries WHERE id = ?", [id]);
+    if (!result.changes) {
+      res.status(404).json({ message: "Package inquiry not found." });
+      return;
+    }
+    res.status(204).send();
   } catch (err) {
     next(err);
   }

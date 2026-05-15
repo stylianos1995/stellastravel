@@ -99,3 +99,28 @@ export const deleteTicketRequest = (id, token) =>
     method: "DELETE",
     headers: bearerHeaders(token),
   });
+
+export const createPackageInquiry = (payload) =>
+  request("/package-inquiries", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+export const getPackageInquiries = (token) =>
+  request("/package-inquiries", {
+    method: "GET",
+    headers: bearerHeaders(token),
+  });
+
+export const markPackageInquiryChecked = (id, checked, token) =>
+  request(`/package-inquiries/${id}/check`, {
+    method: "PUT",
+    headers: bearerHeaders(token),
+    body: JSON.stringify({ checked }),
+  });
+
+export const deletePackageInquiry = (id, token) =>
+  request(`/package-inquiries/${id}`, {
+    method: "DELETE",
+    headers: bearerHeaders(token),
+  });

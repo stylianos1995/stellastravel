@@ -6,6 +6,8 @@ import Home from "./pages/Home";
 import PackagesPage from "./pages/Packages";
 import AdminPanel from "./pages/AdminPanel";
 import TicketRequest from "./pages/TicketRequest";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import CookieConsent from "./components/CookieConsent";
 import { getPackages } from "./api";
 import "./styles/styles.css";
 
@@ -59,6 +61,17 @@ const translations = {
     days: "days",
     currencySymbol: "€",
     viewDetails: "View Details",
+    requestPackageInfo: "Request information",
+    packageInquiryEyebrow: "Package inquiry",
+    packageInquiryTitle: "Request information",
+    packageInquirySubtitle: "Leave your details and we will contact you about this package.",
+    email: "Email",
+    emailOptional: "Email (optional)",
+    preferredTravelDate: "Preferred travel date (optional)",
+    submitPackageInquiry: "Send request",
+    packageInquirySuccess: "Your request has been sent. We will contact you soon.",
+    packageInquiryError: "Failed to send request. Please try again.",
+    close: "Close",
     noPackages: "No packages found that match your criteria.",
     previous: "Previous",
     next: "Next",
@@ -90,6 +103,11 @@ const translations = {
     adminPassword: "Password",
     adminLoginButton: "Sign In",
     adminLogout: "Sign Out",
+    adminLogoutConfirm: "Are you sure you want to sign out?",
+    adminNavAddPackage: "Add Package",
+    adminNavTicketRequests: "Ticket Request",
+    adminNavPackageInquiries: "Package Inquiries",
+    adminNavPendingCount: "Pending count",
     uploadingFile: "Uploading file...",
     uploadSuccess: "File uploaded successfully.",
     adminInvalidCredentials: "Invalid credentials.",
@@ -131,9 +149,17 @@ const translations = {
     adminTicketRequests: "Ticket Requests",
     adminSectionPackages: "Packages",
     adminSectionTickets: "Ticket Requests",
+    adminSectionPackageInquiries: "Package inquiries",
+    adminPackageInquiries: "Package inquiries",
     adminStatsPackages: "Total Packages",
     adminStatsTickets: "Total Tickets",
+    adminStatsPackageInquiries: "Package inquiries",
     adminStatsPending: "Pending Tickets",
+    adminStatsPendingInquiries: "Pending inquiries",
+    adminSearchPackageInquiries: "Search package inquiries",
+    packageInquiryDeleteConfirm: "Are you sure you want to delete this package inquiry?",
+    noPackageInquiries: "No package inquiries yet.",
+    inquiryPackageLabel: "Package",
     adminSearchTickets: "Search tickets",
     adminFilterStatus: "Filter status",
     all: "All",
@@ -141,6 +167,7 @@ const translations = {
     status: "Status",
     ticketChecked: "Checked",
     ticketPending: "Pending",
+    ticketOverdue: "Overdue",
     markChecked: "Mark Checked",
     markUnchecked: "Uncheck",
     ticketDeleteConfirm: "Are you sure you want to delete this ticket request?",
@@ -170,6 +197,15 @@ const translations = {
     closed: "Closed",
     holidayNote: "Note: Holiday schedules may differ.",
     rights: "All rights reserved.",
+    footerPrivacy: "Privacy & cookies",
+    cookieBannerText: "We use essential cookies and local storage to remember your choices and run the site. See our",
+    privacyPolicyLink: "Privacy & Cookie Policy",
+    cookieAccept: "Accept",
+    privacyEyebrow: "Legal",
+    privacyTitle: "Privacy & Cookie Policy",
+    privacyLastUpdated: "Last updated: May 2026",
+    privacyTocLabel: "Table of contents",
+    privacyBackHome: "Back to home",
   },
   el: {
     navHome: "Αρχική",
@@ -220,6 +256,17 @@ const translations = {
     days: "ημέρες",
     currencySymbol: "€",
     viewDetails: "Προβολή Λεπτομερειών",
+    requestPackageInfo: "Αίτημα πληροφοριών",
+    packageInquiryEyebrow: "Αίτημα πακέτου",
+    packageInquiryTitle: "Αίτημα πληροφοριών",
+    packageInquirySubtitle: "Αφήστε τα στοιχεία σας και θα επικοινήσουμε μαζί σας για αυτό το πακέτο.",
+    email: "Email",
+    emailOptional: "Email (προαιρετικό)",
+    preferredTravelDate: "Προτιμώμενη ημερομηνία ταξιδιού (προαιρετικό)",
+    submitPackageInquiry: "Αποστολή αιτήματος",
+    packageInquirySuccess: "Το αίτημά σας στάλθηκε. Θα επικοινήσουμε μαζί σας σύντομα.",
+    packageInquiryError: "Αποτυχία αποστολής. Προσπαθήστε ξανά.",
+    close: "Κλείσιμο",
     noPackages: "Δεν βρέθηκαν πακέτα με αυτά τα κριτήρια.",
     previous: "Προηγούμενη",
     next: "Επόμενη",
@@ -251,6 +298,11 @@ const translations = {
     adminPassword: "Κωδικός",
     adminLoginButton: "Σύνδεση",
     adminLogout: "Αποσύνδεση",
+    adminLogoutConfirm: "Είστε σίγουροι ότι θέλετε να αποσυνδεθείτε;",
+    adminNavAddPackage: "Προσθήκη Πακέτου",
+    adminNavTicketRequests: "Αίτημα Εισιτηρίου",
+    adminNavPackageInquiries: "Αιτήματα Πακέτων",
+    adminNavPendingCount: "Αριθμός σε αναμονή",
     uploadingFile: "Μεταφόρτωση αρχείου...",
     uploadSuccess: "Το αρχείο ανέβηκε επιτυχώς.",
     adminInvalidCredentials: "Μη έγκυρα στοιχεία σύνδεσης.",
@@ -292,9 +344,17 @@ const translations = {
     adminTicketRequests: "Αιτήματα Εισιτηρίων",
     adminSectionPackages: "Πακέτα",
     adminSectionTickets: "Αιτήματα Εισιτηρίων",
+    adminSectionPackageInquiries: "Αιτήματα πακέτων",
+    adminPackageInquiries: "Αιτήματα πακέτων",
     adminStatsPackages: "Σύνολο Πακέτων",
     adminStatsTickets: "Σύνολο Αιτημάτων",
+    adminStatsPackageInquiries: "Αιτήματα πακέτων",
     adminStatsPending: "Αιτήματα σε αναμονή",
+    adminStatsPendingInquiries: "Αιτήματα πακέτων σε αναμονή",
+    adminSearchPackageInquiries: "Αναζήτηση αιτημάτων πακέτων",
+    packageInquiryDeleteConfirm: "Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το αίτημα πακέτου;",
+    noPackageInquiries: "Δεν υπάρχουν αιτήματα πακέτων ακόμη.",
+    inquiryPackageLabel: "Πακέτο",
     adminSearchTickets: "Αναζήτηση αιτημάτων",
     adminFilterStatus: "Φίλτρο κατάστασης",
     all: "Όλα",
@@ -302,6 +362,7 @@ const translations = {
     status: "Κατάσταση",
     ticketChecked: "Ελεγμένο",
     ticketPending: "Σε αναμονή",
+    ticketOverdue: "Εκπρόθεσμο",
     markChecked: "Σήμανση ως ελεγμένο",
     markUnchecked: "Αφαίρεση σήμανσης",
     ticketDeleteConfirm: "Είστε σίγουροι ότι θέλετε να διαγράψετε αυτό το αίτημα εισιτηρίου;",
@@ -331,6 +392,15 @@ const translations = {
     closed: "Κλειστά",
     holidayNote: "Σημείωση: Το ωράριο ενδέχεται να διαφέρει τις αργίες.",
     rights: "Με επιφύλαξη παντός δικαιώματος.",
+    footerPrivacy: "Απόρρητο & cookies",
+    cookieBannerText: "Χρησιμοποιούμε απαραίτητα cookies και local storage για τις επιλογές σας και τη λειτουργία του ιστότοπου. Δείτε την",
+    privacyPolicyLink: "Πολιτική Απορρήτου & Cookies",
+    cookieAccept: "Αποδοχή",
+    privacyEyebrow: "Νομικά",
+    privacyTitle: "Πολιτική Απορρήτου & Cookies",
+    privacyLastUpdated: "Τελευταία ενημέρωση: Μάιος 2026",
+    privacyTocLabel: "Πίνακας περιεχομένου",
+    privacyBackHome: "Επιστροφή στην αρχική",
   },
 };
 
@@ -388,6 +458,7 @@ const AppContent = () => {
             element={<PackagesPage t={t} packages={allPackages} packagesError={packagesError} />}
           />
           <Route path="/tickets" element={<TicketRequest t={t} lang={lang} />} />
+          <Route path="/privacy" element={<PrivacyPolicy t={t} lang={lang} />} />
           <Route
             path="/admin"
             element={
@@ -402,6 +473,7 @@ const AppContent = () => {
         </Routes>
       </main>
       <Footer t={t} />
+      {!isAdminRoute ? <CookieConsent t={t} /> : null}
     </div>
   );
 };

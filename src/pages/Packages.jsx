@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import PackageInquiryModal from "../components/PackageInquiryModal";
 
 const defaultApiBase = "http://localhost:5000/api";
 
@@ -55,6 +56,7 @@ const PackagesPage = ({ t, packages, packagesError }) => {
   const [priceMax, setPriceMax] = useState("");
   const [duration, setDuration] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [inquiryPackage, setInquiryPackage] = useState(null);
   const packagesPerPage = 6;
 
   const filteredPackages = packages.filter((pkg) => {
@@ -179,17 +181,26 @@ const PackagesPage = ({ t, packages, packagesError }) => {
                   ) : null}
                 </div>
               ) : null}
-              <button
-                type="button"
-                className={`package-view-details ${pdfUrl ? "btn-primary" : "btn-secondary"}`}
-                disabled={!pdfUrl}
-                onClick={() => {
-                  if (!pdfUrl) return;
-                  window.open(pdfUrl, "_blank", "noopener,noreferrer");
-                }}
-              >
-                {t.viewDetails}
-              </button>
+              <div className="package-card-actions">
+                <button
+                  type="button"
+                  className="btn-primary package-request-btn"
+                  onClick={() => setInquiryPackage(pkg)}
+                >
+                  {t.requestPackageInfo}
+                </button>
+                <button
+                  type="button"
+                  className={`package-view-details ${pdfUrl ? "btn-secondary" : "btn-secondary"}`}
+                  disabled={!pdfUrl}
+                  onClick={() => {
+                    if (!pdfUrl) return;
+                    window.open(pdfUrl, "_blank", "noopener,noreferrer");
+                  }}
+                >
+                  {t.viewDetails}
+                </button>
+              </div>
             </article>
             );
           })
@@ -220,6 +231,14 @@ const PackagesPage = ({ t, packages, packagesError }) => {
             {t.next}
           </button>
         </div>
+      ) : null}
+
+      {inquiryPackage ? (
+        <PackageInquiryModal
+          t={t}
+          pkg={inquiryPackage}
+          onClose={() => setInquiryPackage(null)}
+        />
       ) : null}
     </section>
   );

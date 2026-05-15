@@ -526,6 +526,79 @@ body {
   font-size: 0.95rem;
 }
 
+.package-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.package-request-btn,
+.package-view-details {
+  width: 100%;
+}
+
+.inquiry-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.inquiry-modal {
+  position: relative;
+  width: min(640px, 100%);
+  max-height: min(92vh, 900px);
+  overflow: auto;
+  padding: 24px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
+}
+
+.inquiry-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  border: none;
+  background: transparent;
+  font-size: 1.75rem;
+  line-height: 1;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.inquiry-modal-header {
+  margin-bottom: 16px;
+  padding-right: 28px;
+}
+
+.inquiry-modal-package-name {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.inquiry-modal-form {
+  margin-top: 8px;
+}
+
+.inquiry-modal-status {
+  margin: 0;
+  font-weight: 600;
+}
+
+.inquiry-modal-status--success {
+  color: #15803d;
+}
+
+.inquiry-modal-status--error {
+  color: #b91c1c;
+}
+
 .package-view-details {
   margin-top: 4px;
   display: inline-block;
@@ -579,28 +652,9 @@ body {
   align-content: start;
 }
 
-.admin-stats {
+.admin-nav {
   display: grid;
   gap: 8px;
-  margin-bottom: 6px;
-}
-
-.admin-stat {
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 8px 10px;
-  background: #f8fafc;
-  display: flex;
-  justify-content: space-between;
-}
-
-.admin-stat span {
-  color: #64748b;
-  font-size: 0.85rem;
-}
-
-.admin-stat strong {
-  color: #0f172a;
 }
 
 .admin-side-btn {
@@ -612,12 +666,51 @@ body {
   text-align: left;
   font-weight: 600;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .admin-side-btn.active {
   background: #1d4ed8;
   color: #ffffff;
   border-color: #1d4ed8;
+}
+
+.admin-side-btn.active .admin-nav-badge {
+  background: #ffffff;
+  color: #1d4ed8;
+}
+
+.admin-nav-badge {
+  min-width: 1.5rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.admin-side-btn--logout {
+  margin-top: 8px;
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.admin-side-btn--logout:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+}
+
+.admin-side-btn--logout.active {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
 }
 
 .admin-content {
@@ -735,6 +828,32 @@ body {
   background: #ecfdf3;
   border-radius: 10px;
   padding: 12px;
+}
+
+.admin-item.ticket-overdue {
+  border: 2px solid #dc2626;
+  border-radius: 10px;
+  background: #fef2f2;
+  padding: 12px;
+  margin: 4px 0;
+}
+
+.ticket-overdue-badge {
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.ticket-overdue-label {
+  color: #b91c1c;
+  font-weight: 700;
 }
 
 .admin-item p {
@@ -1039,6 +1158,123 @@ body {
   font-size: 0.9rem;
 }
 
+.footer-legal-link {
+  color: #bfdbfe;
+  margin-left: 0.5em;
+  text-decoration: underline;
+}
+
+.footer-legal-link:hover {
+  color: #ffffff;
+}
+
+.cookie-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  padding: 16px 20px;
+  background: #0f172a;
+  color: #e2e8f0;
+  box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.25);
+}
+
+.cookie-banner-inner {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+}
+
+.cookie-banner-text {
+  margin: 0;
+  flex: 1 1 280px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.cookie-banner-link {
+  color: #93c5fd;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.cookie-banner-link:hover {
+  color: #ffffff;
+}
+
+.cookie-banner-actions {
+  flex-shrink: 0;
+}
+
+body.cookie-banner-open .page-content {
+  padding-bottom: 120px;
+}
+
+.legal-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 8px 0 48px;
+}
+
+.legal-updated {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin-top: 8px;
+}
+
+.legal-toc {
+  margin: 24px 0;
+  padding: 16px 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.legal-toc ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.legal-toc li + li {
+  margin-top: 6px;
+}
+
+.legal-toc a {
+  color: #1d4ed8;
+  font-weight: 500;
+}
+
+.legal-sections {
+  display: grid;
+  gap: 28px;
+}
+
+.legal-section h2 {
+  margin: 0 0 12px;
+  font-size: 1.25rem;
+  color: #0f172a;
+}
+
+.legal-section p {
+  margin: 0 0 10px;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.legal-back {
+  margin-top: 32px;
+}
+
+.legal-back a {
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
 @media (max-width: 760px) {
   .hero-section {
     padding: 34px 24px;
@@ -1089,5 +1325,14 @@ body {
 
   .passenger-grid {
     grid-template-columns: 1fr;
+  }
+
+  .cookie-banner-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cookie-banner-actions .btn-primary {
+    width: 100%;
   }
 }
