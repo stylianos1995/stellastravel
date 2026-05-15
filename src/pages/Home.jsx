@@ -107,9 +107,9 @@ const Home = ({ t }) => {
           <div className="map-embed">
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3033.3143784284625!2d21.67807217796688!3d40.51254187142404!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x13577d36b00597fd%3A0x992739deb2db7d1a!2sStellas%20Travel%20Agency!5e0!3m2!1sel!2snl!4v1774987882186!5m2!1sel!2snl"
-              width="600"
+              width="100%"
               height="450"
-              style={{ border: 0 }}
+              style={{ border: 0, maxWidth: "100%" }}
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
