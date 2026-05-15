@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import PackageInquiryModal from "../components/PackageInquiryModal";
+import PriceRangeSlider from "../components/PriceRangeSlider";
 
 const defaultApiBase = "http://localhost:5000/api";
 
@@ -50,10 +51,12 @@ function getPackageCoverPhotoUrl(pkg) {
   return imageField;
 }
 
+const PRICE_SLIDER_MAX = 10000;
+
 const PackagesPage = ({ t, packages, packagesError }) => {
   const [country, setCountry] = useState("");
-  const [priceMin, setPriceMin] = useState("");
-  const [priceMax, setPriceMax] = useState("");
+  const [priceMin, setPriceMin] = useState(0);
+  const [priceMax, setPriceMax] = useState(PRICE_SLIDER_MAX);
   const [duration, setDuration] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [inquiryPackage, setInquiryPackage] = useState(null);
@@ -64,8 +67,8 @@ const PackagesPage = ({ t, packages, packagesError }) => {
     const filterCountry = country.trim().toLowerCase();
     return (
       (filterCountry ? pkgCountry.includes(filterCountry) : true) &&
-      (priceMin ? Number(pkg.price) >= parseInt(priceMin, 10) : true) &&
-      (priceMax ? Number(pkg.price) <= parseInt(priceMax, 10) : true) &&
+      Number(pkg.price) >= priceMin &&
+      Number(pkg.price) <= priceMax &&
       (duration ? Number(pkg.duration) === parseInt(duration, 10) : true)
     );
   });
@@ -94,6 +97,8 @@ const PackagesPage = ({ t, packages, packagesError }) => {
     }
   }, [currentPage, totalPages]);
 
+  const priceFilterActive = priceMin > 0 || priceMax < PRICE_SLIDER_MAX;
+
   return (
     <section className="packages">
       <div className="section-header">
@@ -113,21 +118,40 @@ const PackagesPage = ({ t, packages, packagesError }) => {
           />
         </label>
 
-        <label>
-          {t.price}:
-          <input
-            type="number"
-            value={priceMin}
-            onChange={(e) => setPriceMin(e.target.value)}
-            placeholder={t.minPrice}
-          />
-          <span className="range-separator">{t.to}</span>
-          <input
-            type="number"
-            value={priceMax}
-            onChange={(e) => setPriceMax(e.target.value)}
-            placeholder={t.maxPrice}
-          />
+        <label className="filter-price-range">
+          <span className="filter-price-range-heading">
+            {t.price}
+            <span className="filter-price-range-values">
+              {t.currencySymbol}
+              {priceMin.toLocaleString()}–{t.currencySymbol}
+              {priceMax.toLocaleString()}
+            </span>
+          </span>
+          <div className="filter-price-range-control">
+            <PriceRangeSlider
+              min={0}
+              max={PRICE_SLIDER_MAX}
+              step={50}
+              valueMin={priceMin}
+              valueMax={priceMax}
+              onMinChange={setPriceMin}
+              onMaxChange={setPriceMax}
+              minAriaLabel={t.minPrice}
+              maxAriaLabel={t.maxPrice}
+            />
+            {priceFilterActive ? (
+              <button
+                type="button"
+                className="price-range-reset"
+                onClick={() => {
+                  setPriceMin(0);
+                  setPriceMax(PRICE_SLIDER_MAX);
+                }}
+              >
+                {t.priceRangeReset}
+              </button>
+            ) : null}
+          </div>
         </label>
 
         <label>

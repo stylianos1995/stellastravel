@@ -313,7 +313,7 @@ app.get("/api/health", (_req, res) => {
 
 app.get("/", (_req, res) => {
   res.json({
-    message: "Stella API is running.",
+    message: "Stellas Travel API is running.",
     endpoints: [
       "/api/health",
       "/api/auth/login",

@@ -1,4 +1,4 @@
-# Stella's Travel Agency
+# Stellas Travel Agency
 
 A bilingual (English / Greek) travel agency site with a React frontend and an Express + SQLite backend. Visitors browse packages, submit custom ticket requests, and administrators manage content through a protected admin area.
 

@@ -8,8 +8,17 @@ const Navbar = ({ t, currentLang, onToggleLanguage }) => {
   return (
     <header className="navbar">
       <div className="brand-wrap">
-        <img src={logo} alt="Stella's Travel Agency logo" className="brand-logo" />
-        <Link to="/" className="brand-title">Stella's Travel Agency</Link>
+        <span className="brand-logo-wrap">
+          <img
+            src={logo}
+            alt="Stellas Travel Agency logo"
+            className="brand-logo"
+            width={80}
+            height={80}
+            decoding="async"
+          />
+        </span>
+        <Link to="/" className="brand-title">Stellas Travel Agency</Link>
       </div>
       <nav>
         <ul className="nav-links">

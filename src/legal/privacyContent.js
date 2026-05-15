@@ -6,8 +6,8 @@ export const privacySections = {
       id: "controller",
       title: "Who we are",
       paragraphs: [
-        "Stella's Travel Agency («we», «us») operates this website to present travel packages and receive ticket and package inquiries.",
-        "Data controller: Stella's Travel Agency, Ioanni Christidi 1, Ptolemaida 502 00, Greece.",
+        "Stellas Travel Agency («we», «us») operates this website to present travel packages and receive ticket and package inquiries.",
+        "Data controller: Stellas Travel Agency, Ioanni Christidi 1, Ptolemaida 502 00, Greece.",
         "Contact for privacy matters: estelsach@gmail.com or +30 2463028796.",
       ],
     },
@@ -95,8 +95,8 @@ export const privacySections = {
       id: "controller",
       title: "Ποιοι είμαστε",
       paragraphs: [
-        "Το Stella's Travel Agency («εμείς») λειτουργεί αυτόν τον ιστότοπο για την παρουσίαση ταξιδιωτικών πακέτων και τη λήψη αιτημάτων εισιτηρίων και πακέτων.",
-        "Υπεύθυνος επεξεργασίας: Stella's Travel Agency, Ιωάννη Χριστίδη 1, Πτολεμαΐδα 502 00, Ελλάδα.",
+        "Το Stellas Travel Agency («εμείς») λειτουργεί αυτόν τον ιστότοπο για την παρουσίαση ταξιδιωτικών πακέτων και τη λήψη αιτημάτων εισιτηρίων και πακέτων.",
+        "Υπεύθυνος επεξεργασίας: Stellas Travel Agency, Ιωάννη Χριστίδη 1, Πτολεμαΐδα 502 00, Ελλάδα.",
         "Επικοινωνία για θέματα απορρήτου: estelsach@gmail.com ή +30 2463028796.",
       ],
     },

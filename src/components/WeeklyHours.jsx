@@ -11,7 +11,7 @@ const WeeklyHours = ({ t }) => {
           <li><span>{t.wednesday}</span><span>9:00 a.m. - 6:00 p.m.</span></li>
           <li><span>{t.thursday}</span><span>9:00 a.m. - 6:00 p.m.</span></li>
           <li><span>{t.friday}</span><span>9:00 a.m. - 6:00 p.m.</span></li>
-          <li><span>{t.saturday}</span><span>9:00 a.m. - 3:00 p.m.</span></li>
+          <li><span>{t.saturday}</span><span>9:00 a.m. - 2:00 p.m.</span></li>
           <li><span>{t.sunday}</span><span>{t.closed}</span></li>
         </ul>
         <p className="hours-note">{t.holidayNote}</p>

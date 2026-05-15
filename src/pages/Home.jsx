@@ -22,7 +22,7 @@ const Home = ({ t }) => {
       <div className="hero-section">
         <img
           src={heroWallpaper}
-          alt="Stella's Travel Agency hero wallpaper"
+          alt="Stellas Travel Agency hero wallpaper"
           className="hero-bg-image"
         />
       </div>
@@ -113,7 +113,7 @@ const Home = ({ t }) => {
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="Stella's Travel Agency location"
+              title="Stellas Travel Agency location"
             />
           </div>
         </div>

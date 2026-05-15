@@ -1,12 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { FacebookIcon, InstagramIcon } from "./SocialIcons";
 
 const Footer = ({ t }) => {
   return (
     <footer className="site-footer">
       <div className="footer-grid">
         <section>
-          <h3>Stella's Travel Agency</h3>
+          <h3>Stellas Travel Agency</h3>
           <p>{t.footerAbout}</p>
         </section>
 
@@ -47,22 +48,30 @@ const Footer = ({ t }) => {
         <section>
           <h4>{t.footerFollow}</h4>
           <div className="social-links">
-            <a href="https://instagram.com" target="_blank" rel="noreferrer">
-              Instagram
+            <a
+              href="https://www.instagram.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="social-link"
+              aria-label={t.footerInstagram}
+            >
+              <InstagramIcon />
             </a>
             <a
               href="https://www.facebook.com/stellastravelagency/"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
+              className="social-link"
+              aria-label={t.footerFacebook}
             >
-              Facebook
+              <FacebookIcon />
             </a>
           </div>
         </section>
       </div>
 
       <p className="footer-copy">
-        © {new Date().getFullYear()} Stella's Travel Agency. {t.rights}{" "}
+        © {new Date().getFullYear()} Stellas Travel Agency. {t.rights}{" "}
         <Link to="/privacy" className="footer-legal-link">
           {t.footerPrivacy}
         </Link>
