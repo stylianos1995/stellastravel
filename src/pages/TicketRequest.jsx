@@ -86,6 +86,7 @@ const TicketRequest = ({ t, lang }) => {
   const [formData, setFormData] = useState(initialForm);
   const [status, setStatus] = useState("");
   const [statusType, setStatusType] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const totalPassengers =
     Number(formData.adultsCount || 0) +
     Number(formData.childrenCount || 0) +
@@ -151,6 +152,10 @@ const TicketRequest = ({ t, lang }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (submitting) return;
+
+    setSubmitting(true);
+    setStatus("");
     try {
       await createTicketRequest({
         firstName: formData.firstName,
@@ -180,6 +185,8 @@ const TicketRequest = ({ t, lang }) => {
     } catch (err) {
       setStatus(err.message || t.ticketError);
       setStatusType("error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -191,7 +198,7 @@ const TicketRequest = ({ t, lang }) => {
         <p>{t.ticketSubtitle}</p>
       </div>
 
-      <form className="admin-form" onSubmit={handleSubmit}>
+      <form className="admin-form" onSubmit={handleSubmit} aria-busy={submitting}>
         <label>
           {t.firstName}
           <input
@@ -436,8 +443,8 @@ const TicketRequest = ({ t, lang }) => {
             )}
 
             <div className="admin-actions admin-span-2">
-              <button type="submit" className="btn-primary">
-                {t.submitTicketRequest}
+              <button type="submit" className="btn-primary" disabled={submitting}>
+                {submitting ? t.submittingTicketRequest : t.submitTicketRequest}
               </button>
             </div>
           </>

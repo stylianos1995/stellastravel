@@ -97,8 +97,6 @@ const PackagesPage = ({ t, packages, packagesError }) => {
     }
   }, [currentPage, totalPages]);
 
-  const priceFilterActive = priceMin > 0 || priceMax < PRICE_SLIDER_MAX;
-
   return (
     <section className="packages">
       <div className="section-header">
@@ -139,18 +137,6 @@ const PackagesPage = ({ t, packages, packagesError }) => {
               minAriaLabel={t.minPrice}
               maxAriaLabel={t.maxPrice}
             />
-            {priceFilterActive ? (
-              <button
-                type="button"
-                className="price-range-reset"
-                onClick={() => {
-                  setPriceMin(0);
-                  setPriceMax(PRICE_SLIDER_MAX);
-                }}
-              >
-                {t.priceRangeReset}
-              </button>
-            ) : null}
           </div>
         </label>
 

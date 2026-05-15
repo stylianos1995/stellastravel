@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   createPackage,
   deletePackageInquiry,
@@ -19,6 +20,26 @@ import {
   BoatCategoryIcon,
   OtherCategoryIcon,
 } from "../components/TicketCategoryIcons";
+import {
+  AdminHomeIcon,
+  AdminInquiryIcon,
+  AdminLogoutIcon,
+  AdminPackageIcon,
+  AdminTicketIcon,
+} from "../components/AdminNavIcons";
+
+const TICKETS_PER_CATEGORY_PAGE = 5;
+
+function paginateCategoryItems(items, page) {
+  const totalPages = Math.max(1, Math.ceil(items.length / TICKETS_PER_CATEGORY_PAGE));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const start = (safePage - 1) * TICKETS_PER_CATEGORY_PAGE;
+  return {
+    pageItems: items.slice(start, start + TICKETS_PER_CATEGORY_PAGE),
+    totalPages,
+    safePage,
+  };
+}
 
 const emptyForm = {
   name: "",
@@ -43,8 +64,15 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
   const [activeSection, setActiveSection] = useState("packages");
   const [ticketQuery, setTicketQuery] = useState("");
   const [ticketStatusFilter, setTicketStatusFilter] = useState("all");
+  const [airplaneTicketPage, setAirplaneTicketPage] = useState(1);
+  const [boatTicketPage, setBoatTicketPage] = useState(1);
   const [inquiryQuery, setInquiryQuery] = useState("");
   const [inquiryStatusFilter, setInquiryStatusFilter] = useState("all");
+
+  useEffect(() => {
+    setAirplaneTicketPage(1);
+    setBoatTicketPage(1);
+  }, [ticketQuery, ticketStatusFilter]);
 
   const loadInbox = async (authToken) => {
     try {
@@ -263,6 +291,14 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
   if (!token) {
     return (
       <section className="admin-panel">
+        <p className="admin-back-home-wrap">
+          <Link to="/" className="admin-side-btn admin-side-btn--home">
+            <span className="admin-side-btn-label">
+              <AdminHomeIcon className="admin-side-icon" />
+              <span>{t.adminBackHome}</span>
+            </span>
+          </Link>
+        </p>
         <div className="section-header">
           <p className="eyebrow">CMS</p>
           <h2>{t.adminLoginTitle}</h2>
@@ -314,6 +350,9 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
   const otherTickets = filteredTickets.filter(
     (item) => item.transport_type !== "airplane" && item.transport_type !== "boat"
   );
+
+  const airplanePaginated = paginateCategoryItems(airplaneTickets, airplaneTicketPage);
+  const boatPaginated = paginateCategoryItems(boatTickets, boatTicketPage);
 
   const pendingTicketCount = ticketRequests.filter((item) => !item.is_checked).length;
   const pendingInquiryCount = packageInquiries.filter((item) => !item.is_checked).length;
@@ -399,6 +438,34 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
     );
   };
 
+  const renderCategoryPagination = (totalPages, currentPage, setPage) => {
+    if (totalPages <= 1) return null;
+    const page = Math.min(currentPage, totalPages);
+    return (
+      <div className="pagination admin-category-pagination">
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+          disabled={page === 1}
+        >
+          {t.previous}
+        </button>
+        <span className="pagination-label">
+          {t.page} {page} {t.of} {totalPages}
+        </span>
+        <button
+          type="button"
+          className="btn-secondary"
+          onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+          disabled={page === totalPages}
+        >
+          {t.next}
+        </button>
+      </div>
+    );
+  };
+
   return (
     <section className="admin-panel">
       <div className="section-header">
@@ -410,19 +477,31 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
       <div className="admin-dashboard">
         <aside className="admin-sidebar">
           <nav className="admin-nav" aria-label={t.adminTitle}>
+          <Link to="/" className="admin-side-btn admin-side-btn--home">
+            <span className="admin-side-btn-label">
+              <AdminHomeIcon className="admin-side-icon" />
+              <span>{t.adminBackHome}</span>
+            </span>
+          </Link>
           <button
             type="button"
             className={`admin-side-btn ${activeSection === "packages" ? "active" : ""}`}
             onClick={() => setActiveSection("packages")}
           >
-            {t.adminNavAddPackage}
+            <span className="admin-side-btn-label">
+              <AdminPackageIcon className="admin-side-icon" />
+              <span>{t.adminNavAddPackage}</span>
+            </span>
           </button>
           <button
             type="button"
             className={`admin-side-btn ${activeSection === "tickets" ? "active" : ""}`}
             onClick={() => setActiveSection("tickets")}
           >
-            <span>{t.adminNavTicketRequests}</span>
+            <span className="admin-side-btn-label">
+              <AdminTicketIcon className="admin-side-icon" />
+              <span>{t.adminNavTicketRequests}</span>
+            </span>
             <span className="admin-nav-badge" aria-label={t.adminNavPendingCount}>
               {pendingTicketCount}
             </span>
@@ -432,13 +511,19 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
             className={`admin-side-btn ${activeSection === "packageInquiries" ? "active" : ""}`}
             onClick={() => setActiveSection("packageInquiries")}
           >
-            <span>{t.adminNavPackageInquiries}</span>
+            <span className="admin-side-btn-label">
+              <AdminInquiryIcon className="admin-side-icon" />
+              <span>{t.adminNavPackageInquiries}</span>
+            </span>
             <span className="admin-nav-badge" aria-label={t.adminNavPendingCount}>
               {pendingInquiryCount}
             </span>
           </button>
           <button type="button" className="admin-side-btn admin-side-btn--logout" onClick={handleLogout}>
-            {t.adminLogout}
+            <span className="admin-side-btn-label">
+              <AdminLogoutIcon className="admin-side-icon" />
+              <span>{t.adminLogout}</span>
+            </span>
           </button>
           </nav>
         </aside>
@@ -565,7 +650,14 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
                       <span>{t.airplane}</span>
                     </h4>
                     {airplaneTickets.length > 0 ? (
-                      airplaneTickets.map((item) => renderTicketItem(item))
+                      <>
+                        {airplanePaginated.pageItems.map((item) => renderTicketItem(item))}
+                        {renderCategoryPagination(
+                          airplanePaginated.totalPages,
+                          airplanePaginated.safePage,
+                          setAirplaneTicketPage
+                        )}
+                      </>
                     ) : (
                       <p className="admin-ticket-category-empty">{t.adminTicketsNoneInCategory}</p>
                     )}
@@ -576,7 +668,14 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
                       <span>{t.boat}</span>
                     </h4>
                     {boatTickets.length > 0 ? (
-                      boatTickets.map((item) => renderTicketItem(item))
+                      <>
+                        {boatPaginated.pageItems.map((item) => renderTicketItem(item))}
+                        {renderCategoryPagination(
+                          boatPaginated.totalPages,
+                          boatPaginated.safePage,
+                          setBoatTicketPage
+                        )}
+                      </>
                     ) : (
                       <p className="admin-ticket-category-empty">{t.adminTicketsNoneInCategory}</p>
                     )}
