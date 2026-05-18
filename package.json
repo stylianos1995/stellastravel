@@ -11,7 +11,7 @@
     "build": "react-scripts build",
     "dev": "react-scripts start",
     "server": "node server/index.js",
-    "render-build": "npm_config_build_from_source=true npm install"
+    "render-build": "npm install"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -23,7 +23,7 @@
     "react-dom": "^18.0.0",
     "react-router-dom": "^6.30.3",
     "react-scripts": "^5.0.1",
-    "sqlite3": "^6.0.1"
+    "pg": "^8.16.0"
   },
   "browserslist": {
     "production": [

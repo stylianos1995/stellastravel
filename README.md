@@ -1,6 +1,6 @@
 # Stellas Travel Agency
 
-A bilingual (English / Greek) travel agency site with a React frontend and an Express + SQLite backend. Visitors browse packages, submit custom ticket requests, and administrators manage content through a protected admin area.
+A bilingual (English / Greek) travel agency site with a React frontend and an Express + **PostgreSQL** backend. Visitors browse packages, submit custom ticket requests, and administrators manage content through a protected admin area.
 
 ---
 
@@ -9,7 +9,7 @@ A bilingual (English / Greek) travel agency site with a React frontend and an Ex
 The app is split into two processes:
 
 1. **Frontend** — A single-page app built with React and React Router. It fetches public package listings and submits ticket forms to the API. Admin pages call the same API with a JWT after login.
-2. **Backend** — An Express server that stores data in SQLite, issues JWTs for admins, and serves uploaded files from disk.
+2. **Backend** — An Express server that stores data in **PostgreSQL**, issues JWTs for admins, and serves uploaded files from disk.
 
 They communicate over HTTP: the UI uses `fetch` through a small client in `src/api.js`. By default the client targets `http://localhost:5000/api` (configurable via environment variables).
 
@@ -20,7 +20,7 @@ They communicate over HTTP: the UI uses `fetch` through a small client in `src/a
 ### Stack
 
 - **Express** — HTTP API and middleware (JSON body parser, explicit CORS headers for browsers).
-- **SQLite** (`server/data.db`) — Persistent storage. The file is created on first run; schema is applied in `initDb()`.
+- **PostgreSQL** (`pg`) — Persistent storage via `DATABASE_URL`. Tables are created on first run in `server/db.js` → `initDb()`.
 - **jsonwebtoken** + **bcryptjs** — Admin login: password is verified against a hash; the API returns a JWT (lifetime configurable via `JWT_EXPIRES_IN`, default 30 days).
 - **multer** — File uploads (images or PDFs) stored under `server/uploads/`, exposed as static files at `/uploads/...`.
 
@@ -30,12 +30,15 @@ Optional `.env` in the project root (loaded via `dotenv`):
 
 | Variable         | Purpose                                      | Default (if unset)                          |
 | ---------------- | -------------------------------------------- | ------------------------------------------- |
+| `DATABASE_URL`   | **Required.** PostgreSQL connection string   | —                                           |
+| `DATABASE_SSL`   | Force SSL on (`true`) or off (`false`). Auto-detected for Neon/Render/Supabase URLs if unset. | auto |
 | `PORT`           | API listen port                              | `5000`                                      |
 | `JWT_SECRET`     | Sign/verify admin tokens                     | `change-me-secret` (override in production) |
 | `JWT_EXPIRES_IN` | Admin JWT lifetime (e.g. `12h`, `7d`, `30d`) | `30d`                                       |
 | `ADMIN_USERNAME` | Seed admin user                              | `admin`                                     |
 | `ADMIN_PASSWORD` | Seed admin password                          | `admin123`                                  |
 | `ACCESS_CONTROL_ALLOW_ORIGIN` | Optional fixed CORS origin (e.g. `https://stellastravel.vercel.app`). If unset, the API sends `Access-Control-Allow-Origin: *` so all Vercel preview URLs work. | `*` (wildcard) |
+| `SEED_DEMO_OVERDUE_TICKET` | Seed a demo overdue ticket in admin | enabled unless `false` |
 
 On first startup, if no row exists for `ADMIN_USERNAME`, an admin account is inserted with a bcrypt hash of `ADMIN_PASSWORD`.
 
@@ -47,7 +50,7 @@ If the UI says the admin token is invalid after you change `JWT_SECRET` or let t
 - **`packages`** — Travel packages shown on the public Packages page and maintained in the admin panel.
 - **`ticket_requests`** — Anonymous ticket lead forms from the `/tickets` page (contact + travel details, transport type, passengers, notes).
 
-SQLite uses WAL mode and a busy timeout to reduce lock errors under concurrent access.
+**Uploads** (`server/uploads/`) still live on the API server disk. On Render without persistent disk, re-deploys can remove uploaded images/PDFs; use external storage (S3, Cloudinary) later if needed.
 
 ### API surface
 
@@ -114,15 +117,24 @@ Errors return JSON with a `message` field when possible; `500` responses avoid l
 
 ## Running locally
 
-You need **Node.js 20.x** (recommended; matches Render and avoids `sqlite3` native mismatches) or another version your team standardizes on for React 18 / CRA.
+You need **Node.js 20.x** and a **PostgreSQL** database (local Docker, [Neon](https://neon.tech) free tier, or Render Postgres).
 
-1. **Install dependencies** (from the project root):
+1. **Copy env file** and set `DATABASE_URL`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Example local URL: `postgresql://postgres:postgres@localhost:5432/stellas_travel`  
+   For Neon/Render, paste the connection string from the dashboard (`?sslmode=require` is fine; SSL is auto-enabled).
+
+2. **Install dependencies** (from the project root):
 
    ```bash
    npm install
    ```
 
-2. **Start the API** (terminal 1):
+3. **Start the API** (terminal 1):
 
    ```bash
    npm run server
@@ -130,7 +142,7 @@ You need **Node.js 20.x** (recommended; matches Render and avoids `sqlite3` nati
 
    Listens on `http://localhost:5000` by default.
 
-3. **Start the React dev server** (terminal 2):
+4. **Start the React dev server** (terminal 2):
 
    ```bash
    npm start
@@ -138,7 +150,9 @@ You need **Node.js 20.x** (recommended; matches Render and avoids `sqlite3` nati
 
    Opens the app (usually `http://localhost:3000`). Ensure `REACT_APP_API_URL` points at your API if not using the default `http://localhost:5000/api`.
 
-4. **Admin access** — Use the credentials from your `.env` or the defaults above; change the default password in any shared or deployed environment.
+5. **Admin access** — Use the credentials from your `.env` or the defaults above; change the default password in any shared or deployed environment.
+
+6. **Health check** — `GET http://localhost:5000/api/health` should return `{ "ok": true, "database": "postgresql" }`.
 
 ### Production build (frontend only)
 
@@ -150,26 +164,107 @@ Outputs static files to `build/`. Serve them with any static host (or your own s
 
 ---
 
-## Deploy the API on Render
+## Render guide (existing API service + PostgreSQL)
 
-If deploy logs show **`GLIBC_2.38' not found`** for `node_sqlite3.node`, Render’s Linux image is older than the **prebuilt** `sqlite3` binary that was installed (often when Render defaults to a very new **Node** such as 26).
+You already host the API on Render (e.g. `https://stellastravel.onrender.com`). Follow these steps to add a **persistent Postgres database** and deploy the updated code.
 
-1. **Build Command:** `npm run render-build`  
-   Runs `npm install` with **`npm_config_build_from_source=true`** so `sqlite3` is **compiled on Render** against that host’s glibc.
+### Before you start
 
-2. **Start Command:** `npm run server`
+1. **Commit and push** the latest code (the version that uses `pg` / `server/db.js`, not `sqlite3`).
+2. On your PC, run `npm install` once so `package-lock.json` includes `pg`.
 
-3. **Node version:** This repo sets **`engines.node` to `20.x`** and includes **`.nvmrc`** (`20`) so Render tends to use an **LTS Node 20** runtime instead of Node 26.
+### Step 1 — Create a PostgreSQL database on Render
 
-4. After changing build settings or `package.json`, use **Clear build cache & deploy** once if a bad dependency layer was cached.
+1. Open [dashboard.render.com](https://dashboard.render.com).
+2. Click **New +** → **PostgreSQL**.
+3. Choose a name (e.g. `stellas-travel-db`), region **same as your web service** (lower latency).
+4. Pick a plan (Free works for testing; data is kept when the DB sleeps).
+5. Click **Create Database** and wait until status is **Available**.
 
-If the dashboard still picks the wrong Node version, add an environment variable **`NODE_VERSION`** = **`20.18.1`** (or another current 20.x).
+### Step 2 — Connect the database to your web service
+
+**Option A — Link from the web service (easiest)**
+
+1. Open your **existing Web Service** (the API, not Vercel).
+2. Go to **Environment**.
+3. Click **Add from Render** (or **Link database**) and select the Postgres you just created.
+4. Render adds **`DATABASE_URL`** automatically (internal URL — correct for service-to-service).
+
+**Option B — Paste the URL manually**
+
+1. On the **PostgreSQL** service page, open **Connections**.
+2. Copy **Internal Database URL** (use this when API and DB are both on Render).
+3. On the **Web Service** → **Environment**, add:
+
+   | Key | Value |
+   | --- | --- |
+   | `DATABASE_URL` | Paste the **Internal** URL |
+
+   Do **not** use the External URL for the API unless the DB is hosted outside Render.
+
+### Step 3 — Set the other environment variables
+
+On the same **Environment** tab for your web service, confirm or add:
+
+| Variable | What to set |
+| -------- | ------------- |
+| `DATABASE_URL` | From Step 2 (required) |
+| `JWT_SECRET` | Long random string (keep stable — changing it logs everyone out) |
+| `ADMIN_USERNAME` | Your admin login |
+| `ADMIN_PASSWORD` | Strong password (not the default `admin123` on production) |
+| `SEED_DEMO_OVERDUE_TICKET` | `false` (optional; avoids demo ticket in admin) |
+
+You do **not** need `DATABASE_SSL` on Render if the URL contains `render.com` (SSL is auto-detected). If connection fails, add `DATABASE_SSL` = `true`.
+
+### Step 4 — Confirm build settings
+
+On the web service **Settings**:
+
+| Setting | Value |
+| ------- | ----- |
+| **Build Command** | `npm run render-build` |
+| **Start Command** | `npm run server` |
+| **Node version** | `20` (or leave default if it matches `engines` in `package.json`) |
+
+### Step 5 — Deploy
+
+1. **Manual Deploy** → **Deploy latest commit** (or push to Git if auto-deploy is on).
+2. If the build fails after switching from SQLite, use **Clear build cache & deploy** once.
+3. Open **Logs** and check for:
+   - `API running on ... (PostgreSQL)`
+   - No `DATABASE_URL is required` error
+
+### Step 6 — Verify
+
+1. In the browser: `https://YOUR-SERVICE.onrender.com/api/health`  
+   Expected: `{ "ok": true, "database": "postgresql" }`
+2. Open your **Vercel site** → Packages page loads.
+3. **Admin** → sign in → add a test package → redeploy the API once → package should **still be there**.
+
+### Important notes
+
+| Topic | Detail |
+| ----- | ------ |
+| **Old SQLite data** | Packages/tickets from before Postgres are **not** migrated. Re-add packages in admin (or ask for a migration script). |
+| **Uploaded files** | Images/PDFs in `server/uploads/` can still be lost on redeploy unless you add a Render **disk** or cloud storage (S3, Cloudinary). |
+| **Vercel** | No change if `REACT_APP_API_URL` already points to `https://YOUR-SERVICE.onrender.com/api`. Redeploy Vercel only if you change the API URL. |
+| **Free tier cold start** | First request after idle can take ~30s; the database data is still there. |
+
+### Troubleshooting
+
+| Symptom | Fix |
+| ------- | --- |
+| Deploy crashes: `DATABASE_URL is required` | Add `DATABASE_URL` on the web service and redeploy. |
+| `Database unavailable` / 503 on `/api/health` | Wrong URL, DB not ready, or use Internal URL + `DATABASE_SSL=true`. |
+| Admin login works but packages empty | Expected after migration — add packages again in admin. |
+| `Invalid token` after deploy | Sign out and sign in again; keep `JWT_SECRET` the same between deploys. |
+| Build still mentions `sqlite3` | Push latest code; clear build cache; ensure `package.json` has `pg` not `sqlite3`. |
 
 ---
 
 ## Deploy the frontend on Vercel
 
-Vercel hosts the **Create React App build** (`build/`). The **Express + SQLite API is not run on Vercel** (no persistent SQLite disk in their model). Host the API on a VPS, Railway, Render, Fly.io, etc., then point the UI at it.
+Vercel hosts the **Create React App build** (`build/`). The **Express API is not run on Vercel**. Host the API on Render (with Postgres), Railway, Fly.io, etc., then point the UI at it.
 
 ### 1. Repo & project
 
@@ -203,7 +298,6 @@ If the dashboard shows different values, align them with `vercel.json` or leave 
 ### 5. Optional checks
 
 - **`public/stella-profile.jpg`** — add if you use the About photo (or the UI falls back to the logo).
-- If **`npm install` fails on Vercel** because of the native **`sqlite3`** package (only needed for the API, not for `react-scripts build`), fix by splitting client/server `package.json` later, or use an install workaround documented in Vercel issues; many builds succeed on Node 18/20.
 
 ---
 
@@ -211,9 +305,9 @@ If the dashboard shows different values, align them with `vercel.json` or leave 
 
 ```
 server/
-  index.js       # Express app, routes, DB init
-  data.db        # SQLite (created at runtime)
-  uploads/       # Uploaded assets (created at runtime)
+  index.js       # Express app, routes
+  db.js          # PostgreSQL pool, schema init, queries
+  uploads/       # Uploaded assets (ephemeral on Render unless disk added)
 src/
   api.js         # HTTP client for the API
   App.jsx        # Router, i18n, package fetch
@@ -222,4 +316,4 @@ src/
 public/
 ```
 
-This README reflects the intended split: **React UI ↔ REST JSON API ↔ SQLite**, with JWT for admin-only routes and open submission of ticket requests for guests.
+This README reflects the intended split: **React UI ↔ REST JSON API ↔ PostgreSQL**, with JWT for admin-only routes and open submission of ticket requests for guests.

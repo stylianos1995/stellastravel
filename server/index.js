@@ -1,10 +1,10 @@
 const express = require("express");
 const path = require("path");
 const fs = require("fs");
-const sqlite3 = require("sqlite3").verbose();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const multer = require("multer");
+const { all, get, run, runInsert, initDb, ping } = require("./db");
 require("dotenv").config();
 
 const app = express();
@@ -15,8 +15,6 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "30d";
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
-const dbPath = path.join(__dirname, "data.db");
-const db = new sqlite3.Database(dbPath);
 const uploadsDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
@@ -85,70 +83,6 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use("/uploads", express.static(uploadsDir));
 
-const run = (sql, params = []) =>
-  new Promise((resolve, reject) => {
-    db.run(sql, params, function onRun(err) {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(this);
-    });
-  });
-
-const all = (sql, params = []) =>
-  new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(rows);
-    });
-  });
-
-const get = (sql, params = []) =>
-  new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(row);
-    });
-  });
-
-const ensureColumn = async (tableName, columnName, columnDefinition) => {
-  const columns = await all(`PRAGMA table_info(${tableName})`);
-  const exists = columns.some((column) => column.name === columnName);
-  if (!exists) {
-    await run(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDefinition}`);
-  }
-};
-
-const defaultPackages = [
-  {
-    name: "Tropical Paradise",
-    country: "Thailand",
-    price: 1500,
-    duration: 7,
-    image:
-      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
-    description:
-      "Enjoy crystal-clear waters, island hopping, and beachfront resorts for a relaxing tropical escape.",
-  },
-  {
-    name: "European Escapade",
-    country: "France",
-    price: 2200,
-    duration: 10,
-    image:
-      "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1200&q=80",
-    description:
-      "Explore iconic landmarks, local cuisine, and charming neighborhoods with guided city experiences.",
-  },
-];
-
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers.authorization || "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
@@ -177,138 +111,13 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
-const initDb = async () => {
-  // Improve concurrency for read/write operations and avoid "database is locked" failures.
-  await run("PRAGMA journal_mode = WAL");
-  await run("PRAGMA busy_timeout = 5000");
-
-  await run(`
-    CREATE TABLE IF NOT EXISTS admins (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL
-    )
-  `);
-
-  await run(`
-    CREATE TABLE IF NOT EXISTS packages (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      country TEXT NOT NULL,
-      price INTEGER NOT NULL,
-      duration INTEGER NOT NULL,
-      image TEXT DEFAULT '',
-      description TEXT DEFAULT ''
-    )
-  `);
-
-  await run(`
-    CREATE TABLE IF NOT EXISTS ticket_requests (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      first_name TEXT NOT NULL,
-      last_name TEXT NOT NULL,
-      date_of_birth TEXT NOT NULL,
-      travel_date TEXT NOT NULL,
-      return_date TEXT DEFAULT '',
-      transport_type TEXT NOT NULL,
-      people_count INTEGER NOT NULL,
-      airplane_luggage INTEGER,
-      boat_has_car INTEGER,
-      created_at TEXT NOT NULL
-    )
-  `);
-
-  await ensureColumn("ticket_requests", "mobile_country_code", "TEXT DEFAULT ''");
-  await ensureColumn("ticket_requests", "mobile_number", "TEXT DEFAULT ''");
-  await ensureColumn("ticket_requests", "is_checked", "INTEGER DEFAULT 0");
-  await ensureColumn("ticket_requests", "from_destination", "TEXT DEFAULT ''");
-  await ensureColumn("ticket_requests", "to_destination", "TEXT DEFAULT ''");
-  await ensureColumn("ticket_requests", "adults_count", "INTEGER DEFAULT 1");
-  await ensureColumn("ticket_requests", "children_count", "INTEGER DEFAULT 0");
-  await ensureColumn("ticket_requests", "babies_count", "INTEGER DEFAULT 0");
-  await ensureColumn("ticket_requests", "notes", "TEXT DEFAULT ''");
-
-  await ensureColumn("packages", "pdf_url", "TEXT DEFAULT ''");
-
-  await run(`
-    CREATE TABLE IF NOT EXISTS package_inquiries (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      package_id INTEGER NOT NULL,
-      package_name TEXT NOT NULL,
-      first_name TEXT NOT NULL,
-      last_name TEXT NOT NULL,
-      mobile_country_code TEXT NOT NULL,
-      mobile_number TEXT NOT NULL,
-      email TEXT DEFAULT '',
-      preferred_travel_date TEXT DEFAULT '',
-      adults_count INTEGER DEFAULT 1,
-      children_count INTEGER DEFAULT 0,
-      babies_count INTEGER DEFAULT 0,
-      people_count INTEGER NOT NULL,
-      notes TEXT DEFAULT '',
-      is_checked INTEGER DEFAULT 0,
-      created_at TEXT NOT NULL
-    )
-  `);
-
-  const admin = await get("SELECT id FROM admins WHERE username = ?", [ADMIN_USERNAME]);
-  if (!admin) {
-    const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
-    await run("INSERT INTO admins (username, password_hash) VALUES (?, ?)", [
-      ADMIN_USERNAME,
-      passwordHash,
-    ]);
+app.get("/api/health", async (_req, res) => {
+  try {
+    await ping();
+    res.json({ ok: true, database: "postgresql" });
+  } catch (_err) {
+    res.status(503).json({ ok: false, message: "Database unavailable" });
   }
-
-  const packageCount = await get("SELECT COUNT(*) AS count FROM packages");
-  if (!packageCount || packageCount.count === 0) {
-    for (const pkg of defaultPackages) {
-      await run(
-        "INSERT INTO packages (name, country, price, duration, image, description, pdf_url) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [pkg.name, pkg.country, pkg.price, pkg.duration, pkg.image, pkg.description, ""]
-      );
-    }
-  }
-
-  // Demo overdue ticket (unchecked, 8+ days old) — delete from Admin when done previewing.
-  const demoOverdueTicket = await get(
-    "SELECT id FROM ticket_requests WHERE first_name = ? AND last_name = ?",
-    ["Demo", "Overdue"]
-  );
-  if (!demoOverdueTicket && process.env.SEED_DEMO_OVERDUE_TICKET !== "false") {
-    const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
-    const travelDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    await run(
-      `INSERT INTO ticket_requests
-      (first_name, last_name, date_of_birth, travel_date, return_date, from_destination, to_destination, transport_type, people_count, adults_count, children_count, babies_count, notes, mobile_country_code, mobile_number, airplane_luggage, boat_has_car, created_at, is_checked)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        "Demo",
-        "Overdue",
-        "1990-05-15",
-        travelDate,
-        "",
-        "Athens Airport (ATH)",
-        "Thessaloniki Airport (SKG)",
-        "airplane",
-        2,
-        2,
-        0,
-        0,
-        "Demo ticket for overdue styling — safe to delete from Admin.",
-        "+30",
-        "6900000000",
-        1,
-        null,
-        eightDaysAgo,
-        0,
-      ]
-    );
-  }
-};
-
-app.get("/api/health", (_req, res) => {
-  res.json({ ok: true });
 });
 
 app.get("/", (_req, res) => {
@@ -352,9 +161,13 @@ app.post("/api/auth/login", async (req, res, next) => {
   }
 });
 
-app.get("/api/packages", async (_req, res) => {
-  const rows = await all("SELECT * FROM packages ORDER BY id DESC");
-  res.json(rows);
+app.get("/api/packages", async (_req, res, next) => {
+  try {
+    const rows = await all("SELECT * FROM packages ORDER BY id DESC");
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
 });
 
 app.post("/api/tickets", async (req, res, next) => {
@@ -395,7 +208,7 @@ app.post("/api/tickets", async (req, res, next) => {
       return;
     }
 
-    const result = await run(
+    const result = await runInsert(
       `INSERT INTO ticket_requests 
       (first_name, last_name, date_of_birth, travel_date, return_date, from_destination, to_destination, transport_type, people_count, adults_count, children_count, babies_count, notes, mobile_country_code, mobile_number, airplane_luggage, boat_has_car, created_at, is_checked)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -471,7 +284,7 @@ app.post("/api/package-inquiries", async (req, res, next) => {
 
     const snapshotName = String(packageName || pkg.name).trim() || pkg.name;
 
-    const result = await run(
+    const result = await runInsert(
       `INSERT INTO package_inquiries
       (package_id, package_name, first_name, last_name, mobile_country_code, mobile_number, email, preferred_travel_date, adults_count, children_count, babies_count, people_count, notes, is_checked, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -636,7 +449,7 @@ app.post("/api/packages", authenticateToken, async (req, res, next) => {
       return;
     }
 
-    const result = await run(
+    const result = await runInsert(
       "INSERT INTO packages (name, country, price, duration, image, description, pdf_url) VALUES (?, ?, ?, ?, ?, ?, ?)",
       [
         String(name).trim(),
@@ -701,14 +514,18 @@ app.put("/api/packages/:id", authenticateToken, async (req, res, next) => {
   }
 });
 
-app.delete("/api/packages/:id", authenticateToken, async (req, res) => {
-  const { id } = req.params;
-  const result = await run("DELETE FROM packages WHERE id = ?", [id]);
-  if (result.changes === 0) {
-    res.status(404).json({ message: "Package not found." });
-    return;
+app.delete("/api/packages/:id", authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await run("DELETE FROM packages WHERE id = ?", [id]);
+    if (result.changes === 0) {
+      res.status(404).json({ message: "Package not found." });
+      return;
+    }
+    res.status(204).send();
+  } catch (err) {
+    next(err);
   }
-  res.status(204).send();
 });
 
 app.use((err, req, res, _next) => {
@@ -719,8 +536,8 @@ app.use((err, req, res, _next) => {
     const rh = req.headers["access-control-request-headers"];
     res.setHeader("Access-Control-Allow-Headers", rh || "Authorization, Content-Type, X-Requested-With");
   }
-  if (err && err.code === "SQLITE_BUSY") {
-    res.status(503).json({ message: "Database busy. Please retry in a moment." });
+  if (err && (err.code === "57P01" || err.code === "ECONNREFUSED" || err.code === "ENOTFOUND")) {
+    res.status(503).json({ message: "Database unavailable. Please try again shortly." });
     return;
   }
   const message =
@@ -728,10 +545,10 @@ app.use((err, req, res, _next) => {
   res.status(500).json({ message });
 });
 
-initDb()
+initDb({ adminUsername: ADMIN_USERNAME, adminPassword: ADMIN_PASSWORD })
   .then(() => {
     app.listen(PORT, () => {
-      console.log(`API running on http://localhost:${PORT}`);
+      console.log(`API running on http://localhost:${PORT} (PostgreSQL)`);
     });
   })
   .catch((err) => {
