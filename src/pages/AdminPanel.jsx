@@ -20,6 +20,9 @@ import {
   BoatCategoryIcon,
   OtherCategoryIcon,
 } from "../components/TicketCategoryIcons";
+import AdminUploadFeedback from "../components/AdminUploadFeedback";
+
+const emptyUploadFeedback = () => ({ status: "", message: "", fileName: "" });
 import {
   AdminHomeIcon,
   AdminInquiryIcon,
@@ -58,7 +61,8 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
   const [token, setToken] = useState(localStorage.getItem("stella_admin_token") || "");
   const [authError, setAuthError] = useState("");
   const [formError, setFormError] = useState("");
-  const [uploadStatus, setUploadStatus] = useState("");
+  const [coverUpload, setCoverUpload] = useState(emptyUploadFeedback);
+  const [pdfUpload, setPdfUpload] = useState(emptyUploadFeedback);
   const [ticketRequests, setTicketRequests] = useState([]);
   const [packageInquiries, setPackageInquiries] = useState([]);
   const [activeSection, setActiveSection] = useState("packages");
@@ -100,6 +104,8 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
     setFormData(emptyForm);
     setEditingId(null);
     setFormError("");
+    setCoverUpload(emptyUploadFeedback());
+    setPdfUpload(emptyUploadFeedback());
   };
 
   const handleSubmit = async (event) => {
@@ -156,6 +162,8 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
       pdfUrl: pkg.pdf_url ?? "",
       description: pkg.description ?? "",
     });
+    setCoverUpload(emptyUploadFeedback());
+    setPdfUpload(emptyUploadFeedback());
   };
 
   const handleDelete = async (id) => {
@@ -194,17 +202,17 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
     if (!file) return;
     const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name || "");
     if (!isPdf) {
-      setUploadStatus(t.adminPdfOnly);
+      setPdfUpload({ status: "error", message: t.adminPdfOnly, fileName: "" });
       input.value = "";
       return;
     }
     try {
-      setUploadStatus(t.uploadingFile);
+      setPdfUpload({ status: "loading", message: t.uploadingFile, fileName: file.name });
       const result = await uploadPackageAsset(file, token);
       setFormData((prev) => ({ ...prev, pdfUrl: result.url }));
-      setUploadStatus(t.uploadSuccess);
+      setPdfUpload({ status: "success", message: t.uploadSuccessPdf, fileName: file.name });
     } catch (err) {
-      setUploadStatus(err.message);
+      setPdfUpload({ status: "error", message: err.message, fileName: "" });
     }
     input.value = "";
   };
@@ -215,22 +223,22 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
     if (!file) return;
     const isImage = file.type.startsWith("image/");
     if (!isImage) {
-      setUploadStatus(t.adminImageOnly);
+      setCoverUpload({ status: "error", message: t.adminImageOnly, fileName: "" });
       input.value = "";
       return;
     }
     try {
-      setUploadStatus(t.uploadingFile);
+      setCoverUpload({ status: "loading", message: t.uploadingFile, fileName: file.name });
       const result = await uploadPackageAsset(file, token);
       if (result.kind !== "image") {
-        setUploadStatus(t.adminImageOnly);
+        setCoverUpload({ status: "error", message: t.adminImageOnly, fileName: "" });
         input.value = "";
         return;
       }
       setFormData((prev) => ({ ...prev, image: result.url }));
-      setUploadStatus(t.uploadSuccess);
+      setCoverUpload({ status: "success", message: t.uploadSuccessCover, fileName: file.name });
     } catch (err) {
-      setUploadStatus(err.message);
+      setCoverUpload({ status: "error", message: err.message, fileName: "" });
     }
     input.value = "";
   };
@@ -565,25 +573,36 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
                     onChange={(e) => handleChange("duration", e.target.value)}
                   />
                 </label>
-                <label className="admin-span-2">
+                <label className="admin-span-2 admin-upload-field">
                   {t.adminUploadCoverImage}
                   <input
                     type="file"
                     accept="image/*"
                     onChange={handleCoverImageUpload}
                   />
+                  <AdminUploadFeedback
+                    feedback={coverUpload}
+                    attachedUrl={formData.image}
+                    attachedLabel={t.adminUploadAttachedCover}
+                    kind="image"
+                    t={t}
+                  />
                 </label>
-                <label className="admin-span-2">
+                <label className="admin-span-2 admin-upload-field">
                   {t.adminUploadPdf}
                   <input
                     type="file"
                     accept="application/pdf"
                     onChange={handleBrochurePdfUpload}
                   />
+                  <AdminUploadFeedback
+                    feedback={pdfUpload}
+                    attachedUrl={formData.pdfUrl}
+                    attachedLabel={t.adminUploadAttachedPdf}
+                    kind="pdf"
+                    t={t}
+                  />
                 </label>
-                {uploadStatus ? (
-                  <span className="upload-status admin-span-2">{uploadStatus}</span>
-                ) : null}
                 <label className="admin-span-2">
                   {t.adminDescription}
                   <textarea
