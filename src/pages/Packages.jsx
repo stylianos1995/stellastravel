@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import PackageInquiryModal from "../components/PackageInquiryModal";
+import PackagesLoadingScreen from "../components/PackagesLoadingScreen";
 import PriceRangeSlider from "../components/PriceRangeSlider";
 
 const defaultApiBase = "http://localhost:5000/api";
@@ -103,6 +104,10 @@ const PackagesPage = ({ t, packages, packagesError, packagesLoading, onRetryPack
         <p>{t.packagesText}</p>
       </div>
 
+      {packagesLoading ? (
+        <PackagesLoadingScreen message={t.packagesLoading} />
+      ) : (
+        <>
       <div className="filters">
         <label>
           {t.country}:
@@ -148,10 +153,6 @@ const PackagesPage = ({ t, packages, packagesError, packagesLoading, onRetryPack
           />
         </label>
       </div>
-
-      {packagesLoading ? (
-        <p className="packages-status packages-status--loading">{t.packagesLoading}</p>
-      ) : null}
 
       {packagesError ? (
         <div className="packages-status packages-status--error">
@@ -255,6 +256,8 @@ const PackagesPage = ({ t, packages, packagesError, packagesLoading, onRetryPack
           </button>
         </div>
       ) : null}
+        </>
+      )}
 
       {inquiryPackage ? (
         <PackageInquiryModal
