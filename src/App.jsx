@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -61,6 +61,7 @@ const translations = {
     days: "days",
     currencySymbol: "€",
     viewDetails: "View Details",
+    viewDetailsNoPdf: "No PDF brochure uploaded for this package",
     requestPackageInfo: "Book Now",
     packageInquiryEyebrow: "Package booking",
     packageInquiryTitle: "Book Now",
@@ -69,7 +70,8 @@ const translations = {
     emailOptional: "Email (optional)",
     preferredTravelDate: "Preferred travel date (optional)",
     submitPackageInquiry: "Book Now",
-    packageInquirySuccess: "Your request has been sent. We will contact you soon.",
+    packageInquirySuccess: "Your request has been received. We will contact you soon.",
+    requestReceived: "Your request has been received. We will contact you soon.",
     packageInquiryError: "Failed to send request. Please try again.",
     close: "Close",
     noPackages: "No packages found that match your criteria.",
@@ -104,6 +106,7 @@ const translations = {
     adminLoginButton: "Sign In",
     adminLogout: "Sign Out",
     adminBackHome: "Back to Home Page",
+    adminLeaveConfirm: "Leave the admin panel and go to the home page?",
     adminLogoutConfirm: "Are you sure you want to sign out?",
     adminNavAddPackage: "Add Package",
     adminNavTicketRequests: "Ticket Request",
@@ -119,6 +122,8 @@ const translations = {
     adminInvalidCredentials: "Invalid credentials.",
     loadingPackages: "Loading packages...",
     packagesLoadError: "Unable to load packages right now.",
+    packagesLoading: "Loading packages…",
+    packagesRetry: "Try again",
     ticketEyebrow: "Custom travel needs",
     ticketTitle: "Request a Specific Ticket",
     ticketSubtitle: "Tell us your details and travel needs, and our team will contact you.",
@@ -151,7 +156,7 @@ const translations = {
     withCar: "I have a car",
     submitTicketRequest: "Submit Ticket Request",
     submittingTicketRequest: "Submitting…",
-    ticketSuccess: "Your request has been submitted successfully.",
+    ticketSuccess: "Your request has been received. We will contact you soon.",
     ticketError: "Failed to submit request. Please try again.",
     adminTicketRequests: "Ticket Requests",
     adminSectionPackages: "Packages",
@@ -265,6 +270,7 @@ const translations = {
     days: "ημέρες",
     currencySymbol: "€",
     viewDetails: "Προβολή Λεπτομερειών",
+    viewDetailsNoPdf: "Δεν έχει ανέβει PDF για αυτό το πακέτο",
     requestPackageInfo: "Κράτηση τώρα",
     packageInquiryEyebrow: "Κράτηση πακέτου",
     packageInquiryTitle: "Κράτηση τώρα",
@@ -273,7 +279,8 @@ const translations = {
     emailOptional: "Email (προαιρετικό)",
     preferredTravelDate: "Προτιμώμενη ημερομηνία ταξιδιού (προαιρετικό)",
     submitPackageInquiry: "Κράτηση τώρα",
-    packageInquirySuccess: "Το αίτημά σας στάλθηκε. Θα επικοινήσουμε μαζί σας σύντομα.",
+    packageInquirySuccess: "Το αίτημά σας ελήφθη. Θα επικοινωνήσουμε μαζί σας σύντομα.",
+    requestReceived: "Το αίτημά σας ελήφθη. Θα επικοινωνήσουμε μαζί σας σύντομα.",
     packageInquiryError: "Αποτυχία αποστολής. Προσπαθήστε ξανά.",
     close: "Κλείσιμο",
     noPackages: "Δεν βρέθηκαν πακέτα με αυτά τα κριτήρια.",
@@ -308,6 +315,7 @@ const translations = {
     adminLoginButton: "Σύνδεση",
     adminLogout: "Αποσύνδεση",
     adminBackHome: "Επιστροφή στην αρχική",
+    adminLeaveConfirm: "Θέλετε να αφήσετε το πάνελ διαχείρισης και να μεταβείτε στην αρχική;",
     adminLogoutConfirm: "Είστε σίγουροι ότι θέλετε να αποσυνδεθείτε;",
     adminNavAddPackage: "Προσθήκη Πακέτου",
     adminNavTicketRequests: "Αίτημα Εισιτηρίου",
@@ -323,6 +331,8 @@ const translations = {
     adminInvalidCredentials: "Μη έγκυρα στοιχεία σύνδεσης.",
     loadingPackages: "Φόρτωση πακέτων...",
     packagesLoadError: "Δεν είναι δυνατή η φόρτωση πακέτων αυτή τη στιγμή.",
+    packagesLoading: "Φόρτωση πακέτων…",
+    packagesRetry: "Δοκιμάστε ξανά",
     ticketEyebrow: "Ειδικές ταξιδιωτικές ανάγκες",
     ticketTitle: "Αίτημα για Συγκεκριμένο Εισιτήριο",
     ticketSubtitle: "Συμπληρώστε τα στοιχεία και τις ανάγκες σας και η ομάδα μας θα επικοινωνήσει μαζί σας.",
@@ -355,7 +365,7 @@ const translations = {
     withCar: "Έχω αυτοκίνητο",
     submitTicketRequest: "Αποστολή Αιτήματος",
     submittingTicketRequest: "Υποβολή…",
-    ticketSuccess: "Το αίτημά σας καταχωρήθηκε επιτυχώς.",
+    ticketSuccess: "Το αίτημά σας ελήφθη. Θα επικοινωνήσουμε μαζί σας σύντομα.",
     ticketError: "Αποτυχία καταχώρησης. Προσπαθήστε ξανά.",
     adminTicketRequests: "Αιτήματα Εισιτηρίων",
     adminSectionPackages: "Πακέτα",
@@ -432,24 +442,51 @@ const App = () => {
 
 const AppContent = () => {
   const location = useLocation();
-  const [lang, setLang] = useState("en");
+  const [lang, setLang] = useState("el");
   const [allPackages, setAllPackages] = useState([]);
   const [packagesError, setPackagesError] = useState("");
+  const [packagesLoading, setPackagesLoading] = useState(true);
   const t = translations[lang];
   const isAdminRoute = location.pathname.startsWith("/admin");
+  const prevPathRef = useRef(location.pathname);
 
   useEffect(() => {
-    const loadPackages = async () => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  const loadPackages = useCallback(async () => {
+    setPackagesLoading(true);
+    const maxAttempts = 4;
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
       try {
         const rows = await getPackages();
-        setAllPackages(rows);
+        setAllPackages(Array.isArray(rows) ? rows : []);
         setPackagesError("");
+        setPackagesLoading(false);
+        return;
       } catch (_err) {
-        setPackagesError(t.packagesLoadError);
+        if (attempt < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, 1500 * attempt));
+        }
       }
-    };
-    loadPackages();
+    }
+    setPackagesError(t.packagesLoadError);
+    setPackagesLoading(false);
   }, [t.packagesLoadError]);
+
+  useEffect(() => {
+    loadPackages();
+  }, [loadPackages]);
+
+  /** Render free tier cold start: first fetch may fail; refetch after admin often warms the API. */
+  useEffect(() => {
+    const prev = prevPathRef.current;
+    const leftAdmin = prev.startsWith("/admin") && !location.pathname.startsWith("/admin");
+    prevPathRef.current = location.pathname;
+    if (leftAdmin) {
+      loadPackages();
+    }
+  }, [location.pathname, loadPackages]);
 
   return (
     <div className="app-shell">
@@ -473,7 +510,15 @@ const AppContent = () => {
           <Route path="/" element={<Home t={t} />} />
           <Route
             path="/packages"
-            element={<PackagesPage t={t} packages={allPackages} packagesError={packagesError} />}
+            element={
+              <PackagesPage
+                t={t}
+                packages={allPackages}
+                packagesError={packagesError}
+                packagesLoading={packagesLoading}
+                onRetryPackages={loadPackages}
+              />
+            }
           />
           <Route path="/tickets" element={<TicketRequest t={t} lang={lang} />} />
           <Route path="/privacy" element={<PrivacyPolicy t={t} lang={lang} />} />

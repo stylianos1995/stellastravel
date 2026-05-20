@@ -27,12 +27,20 @@ const PackageInquiryModal = ({ t, pkg, onClose }) => {
   const [status, setStatus] = useState("");
   const [statusType, setStatusType] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const todayInput = formatLocalDateInput(new Date());
   const totalPassengers =
     Number(formData.adultsCount || 0) +
     Number(formData.childrenCount || 0) +
     Number(formData.babiesCount || 0);
+
+  useEffect(() => {
+    setSubmitted(false);
+    setStatus("");
+    setStatusType("");
+    setFormData(initialForm);
+  }, [pkg?.id]);
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -65,6 +73,7 @@ const PackageInquiryModal = ({ t, pkg, onClose }) => {
 
     setSubmitting(true);
     setStatus("");
+    setSubmitted(false);
     try {
       await createPackageInquiry({
         packageId: pkg.id,
@@ -80,9 +89,10 @@ const PackageInquiryModal = ({ t, pkg, onClose }) => {
         babiesCount: Number(formData.babiesCount),
         notes: formData.notes.trim(),
       });
-      setStatus(t.packageInquirySuccess);
+      setStatus(t.requestReceived);
       setStatusType("success");
       setFormData(initialForm);
+      setSubmitted(true);
     } catch (err) {
       setStatus(err.message || t.packageInquiryError);
       setStatusType("error");
@@ -112,6 +122,14 @@ const PackageInquiryModal = ({ t, pkg, onClose }) => {
           <p>{t.packageInquirySubtitle}</p>
         </div>
 
+        {submitted ? (
+          <div className="form-success-panel inquiry-modal-success" role="status">
+            <p className="form-success-message">{t.requestReceived}</p>
+            <button type="button" className="btn-primary" onClick={onClose}>
+              {t.close}
+            </button>
+          </div>
+        ) : (
         <form className="admin-form inquiry-modal-form" onSubmit={handleSubmit}>
           <label>
             {t.firstName}
@@ -254,12 +272,13 @@ const PackageInquiryModal = ({ t, pkg, onClose }) => {
             </button>
           </div>
 
-          {status ? (
-            <p className={`admin-span-2 inquiry-modal-status inquiry-modal-status--${statusType}`}>
+          {status && statusType === "error" ? (
+            <p className="admin-span-2 inquiry-modal-status inquiry-modal-status--error">
               {status}
             </p>
           ) : null}
         </form>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   createPackage,
   deletePackageInquiry,
@@ -55,6 +55,15 @@ const emptyForm = {
 };
 
 const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
+  const navigate = useNavigate();
+
+  const handleBackHome = (event) => {
+    event.preventDefault();
+    if (!window.confirm(t.adminLeaveConfirm)) {
+      return;
+    }
+    navigate("/");
+  };
   const [formData, setFormData] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [authForm, setAuthForm] = useState({ username: "", password: "" });
@@ -300,7 +309,7 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
     return (
       <section className="admin-panel">
         <p className="admin-back-home-wrap">
-          <Link to="/" className="admin-side-btn admin-side-btn--home">
+          <Link to="/" className="admin-side-btn admin-side-btn--home" onClick={handleBackHome}>
             <span className="admin-side-btn-label">
               <AdminHomeIcon className="admin-side-icon" />
               <span>{t.adminBackHome}</span>
@@ -485,7 +494,7 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
       <div className="admin-dashboard">
         <aside className="admin-sidebar">
           <nav className="admin-nav" aria-label={t.adminTitle}>
-          <Link to="/" className="admin-side-btn admin-side-btn--home">
+          <Link to="/" className="admin-side-btn admin-side-btn--home" onClick={handleBackHome}>
             <span className="admin-side-btn-label">
               <AdminHomeIcon className="admin-side-icon" />
               <span>{t.adminBackHome}</span>

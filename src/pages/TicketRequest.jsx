@@ -87,6 +87,7 @@ const TicketRequest = ({ t, lang }) => {
   const [status, setStatus] = useState("");
   const [statusType, setStatusType] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const totalPassengers =
     Number(formData.adultsCount || 0) +
     Number(formData.childrenCount || 0) +
@@ -156,6 +157,7 @@ const TicketRequest = ({ t, lang }) => {
 
     setSubmitting(true);
     setStatus("");
+    setSubmitted(false);
     try {
       await createTicketRequest({
         firstName: formData.firstName,
@@ -179,9 +181,10 @@ const TicketRequest = ({ t, lang }) => {
         airplaneLuggage: formData.transportType === "airplane" ? formData.airplaneLuggage : null,
         boatHasCar: formData.transportType === "boat" ? formData.boatHasCar : null,
       });
-      setStatus(t.ticketSuccess);
+      setStatus(t.requestReceived);
       setStatusType("success");
       setFormData(initialForm);
+      setSubmitted(true);
     } catch (err) {
       setStatus(err.message || t.ticketError);
       setStatusType("error");
@@ -198,6 +201,22 @@ const TicketRequest = ({ t, lang }) => {
         <p>{t.ticketSubtitle}</p>
       </div>
 
+      {submitted ? (
+        <div className="form-success-panel" role="status">
+          <p className="form-success-message">{t.requestReceived}</p>
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => {
+              setSubmitted(false);
+              setStatus("");
+              setStatusType("");
+            }}
+          >
+            {t.submitTicketRequest}
+          </button>
+        </div>
+      ) : (
       <form className="admin-form" onSubmit={handleSubmit} aria-busy={submitting}>
         <label>
           {t.firstName}
@@ -450,12 +469,11 @@ const TicketRequest = ({ t, lang }) => {
           </>
         ) : null}
 
-        {status ? (
-          <p className={`admin-span-2 ${statusType === "success" ? "admin-success" : "admin-error"}`}>
-            {status}
-          </p>
+        {status && statusType === "error" ? (
+          <p className="admin-span-2 admin-error">{status}</p>
         ) : null}
       </form>
+      )}
     </section>
   );
 };

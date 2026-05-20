@@ -832,8 +832,34 @@ svg {
 }
 
 .package-view-details:disabled {
-  opacity: 0.65;
+  opacity: 0.55;
   cursor: not-allowed;
+  background: #e2e8f0;
+  color: #94a3b8;
+}
+
+.form-success-panel {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 28px 24px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  text-align: center;
+}
+
+.inquiry-modal-success {
+  margin-top: 8px;
+}
+
+.form-success-message {
+  margin: 0 0 20px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #14532d;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: #ecfdf5;
+  border: 2px solid #22c55e;
 }
 
 .package-meta {
@@ -852,6 +878,34 @@ svg {
   border-radius: 12px;
   padding: 16px;
   color: #475569;
+}
+
+.packages-status {
+  margin: 0 0 16px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.packages-status--loading {
+  background: #eff6ff;
+  border: 2px solid #93c5fd;
+  color: #1e3a8a;
+}
+
+.packages-status--error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  background: #fef2f2;
+  border: 2px solid #fca5a5;
+  color: #991b1b;
+}
+
+.packages-status--error p {
+  margin: 0;
+  flex: 1 1 200px;
 }
 
 .admin-panel {

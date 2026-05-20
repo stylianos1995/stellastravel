@@ -30,17 +30,15 @@ function resolveAnyUrl(raw) {
   return s;
 }
 
-/**
- * Resolved absolute PDF URL for opening in a new tab.
- * Uses `pdf_url` from the API; older rows may still have a `.pdf` URL in `image` only.
- */
+/** True only when a PDF was uploaded via the admin PDF field (not cover image). */
+function hasPackagePdfUpload(pkg) {
+  return Boolean(String(pkg?.pdf_url ?? pkg?.pdfUrl ?? "").trim());
+}
+
+/** Resolved PDF URL for View Details (admin `pdf_url` only). */
 function getPackagePdfUrl(pkg) {
-  const raw = pkg?.pdf_url ?? pkg?.pdfUrl ?? "";
-  const fromPdf = resolveAnyUrl(raw);
-  if (fromPdf) return fromPdf;
-  const legacy = resolveAnyUrl(pkg?.image);
-  if (legacy && /\.pdf($|\?)/i.test(legacy)) return legacy;
-  return "";
+  if (!hasPackagePdfUpload(pkg)) return "";
+  return resolveAnyUrl(pkg?.pdf_url ?? pkg?.pdfUrl ?? "");
 }
 
 /** Cover image for the card only (not used for View Details). Ignore PDF URLs in `image`. */
@@ -53,7 +51,7 @@ function getPackageCoverPhotoUrl(pkg) {
 
 const PRICE_SLIDER_MAX = 10000;
 
-const PackagesPage = ({ t, packages, packagesError }) => {
+const PackagesPage = ({ t, packages, packagesError, packagesLoading, onRetryPackages }) => {
   const [country, setCountry] = useState("");
   const [priceMin, setPriceMin] = useState(0);
   const [priceMax, setPriceMax] = useState(PRICE_SLIDER_MAX);
@@ -151,14 +149,28 @@ const PackagesPage = ({ t, packages, packagesError }) => {
         </label>
       </div>
 
-      {packagesError ? <p className="empty-state">{packagesError}</p> : null}
+      {packagesLoading ? (
+        <p className="packages-status packages-status--loading">{t.packagesLoading}</p>
+      ) : null}
+
+      {packagesError ? (
+        <div className="packages-status packages-status--error">
+          <p>{packagesError}</p>
+          {onRetryPackages ? (
+            <button type="button" className="btn-secondary" onClick={onRetryPackages}>
+              {t.packagesRetry}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="packages-list">
-        {!packagesError && visiblePackages.length > 0 ? (
+        {!packagesLoading && !packagesError && visiblePackages.length > 0 ? (
           visiblePackages.map((pkg) => {
             const pdfUrl = getPackagePdfUrl(pkg);
+            const hasPdf = hasPackagePdfUpload(pkg);
             const coverUrl = getPackageCoverPhotoUrl(pkg);
-            const showPlaceholder = !coverUrl && !pdfUrl;
+            const showPlaceholder = !coverUrl && !hasPdf;
 
             return (
             <article className="package" key={pkg.id}>
@@ -201,8 +213,9 @@ const PackagesPage = ({ t, packages, packagesError }) => {
                 </button>
                 <button
                   type="button"
-                  className={`package-view-details ${pdfUrl ? "btn-secondary" : "btn-secondary"}`}
-                  disabled={!pdfUrl}
+                  className="package-view-details btn-secondary"
+                  disabled={!hasPdf}
+                  title={!hasPdf ? t.viewDetailsNoPdf : undefined}
                   onClick={() => {
                     if (!pdfUrl) return;
                     window.open(pdfUrl, "_blank", "noopener,noreferrer");
@@ -214,7 +227,7 @@ const PackagesPage = ({ t, packages, packagesError }) => {
             </article>
             );
           })
-        ) : !packagesError ? (
+        ) : !packagesLoading && !packagesError ? (
           <p className="empty-state">{t.noPackages}</p>
         ) : null}
       </div>
