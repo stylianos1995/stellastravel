@@ -2,13 +2,7 @@ import React, { useEffect, useState } from "react";
 import PackageInquiryModal from "../components/PackageInquiryModal";
 import PackagesLoadingScreen from "../components/PackagesLoadingScreen";
 import PriceRangeSlider from "../components/PriceRangeSlider";
-import {
-  canViewPackagePdf,
-  getPackagePdfUrl,
-  hasPackagePdfUpload,
-  isPdfAssetUrl,
-  resolveAnyUrl,
-} from "../utils/packagePdf";
+import { canViewPackagePdf, getPackagePdfUrl, resolveAnyUrl } from "../utils/packagePdf";
 
 /** Cover image for the card only (not used for View Details). Ignore PDF URLs in `image`. */
 function getPackageCoverPhotoUrl(pkg) {
@@ -151,20 +145,13 @@ const PackagesPage = ({ t, packages, packagesError, packagesLoading, onRetryPack
           visiblePackages.map((pkg) => {
             const pdfUrl = getPackagePdfUrl(pkg);
             const canViewPdf = canViewPackagePdf(pkg);
-            const hasPdfField = hasPackagePdfUpload(pkg);
             const coverUrl = getPackageCoverPhotoUrl(pkg);
-            const showPlaceholder =
-              !coverUrl && !canViewPdf && !isPdfAssetUrl(pkg?.image);
 
             return (
             <article className="package" key={pkg.id}>
               {coverUrl ? (
                 <div className="package-cover-wrap">
                   <img src={coverUrl} alt={pkg.name} className="package-image" />
-                </div>
-              ) : showPlaceholder ? (
-                <div className="package-pdf-placeholder">
-                  <span>{t.packagePdfPlaceholder}</span>
                 </div>
               ) : null}
               <h3>{pkg.name}</h3>
@@ -200,7 +187,6 @@ const PackagesPage = ({ t, packages, packagesError, packagesLoading, onRetryPack
                   className="package-view-details btn-secondary"
                   disabled={!canViewPdf}
                   aria-disabled={!canViewPdf}
-                  title={!canViewPdf ? t.viewDetailsNoPdf : undefined}
                   onClick={() => {
                     if (!canViewPdf || !pdfUrl) return;
                     window.open(pdfUrl, "_blank", "noopener,noreferrer");
