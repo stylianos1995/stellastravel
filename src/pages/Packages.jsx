@@ -2,63 +2,13 @@ import React, { useEffect, useState } from "react";
 import PackageInquiryModal from "../components/PackageInquiryModal";
 import PackagesLoadingScreen from "../components/PackagesLoadingScreen";
 import PriceRangeSlider from "../components/PriceRangeSlider";
-
-const defaultApiBase = "http://localhost:5000/api";
-
-/** API host for resolving `/uploads/...` paths (must not use the React dev server origin). */
-function getApiOrigin() {
-  try {
-    const base = process.env.REACT_APP_API_URL || defaultApiBase;
-    return new URL(base).origin;
-  } catch {
-    try {
-      return new URL(defaultApiBase).origin;
-    } catch {
-      return "http://localhost:5000";
-    }
-  }
-}
-
-function resolveAnyUrl(raw) {
-  const s = String(raw ?? "").trim();
-  if (!s) return "";
-  if (/^https?:\/\//i.test(s)) return s;
-  if (s.startsWith("//")) return `https:${s}`;
-  if (s.startsWith("/")) {
-    const origin = getApiOrigin();
-    return `${origin.replace(/\/$/, "")}${s}`;
-  }
-  return s;
-}
-
-/** True when the stored path/URL points at a PDF file (admin `pdf_url` / `pdfUrl` only). */
-function isPdfAssetUrl(raw) {
-  const s = String(raw ?? "").trim();
-  if (!s) return false;
-  const path = s.split("?")[0].split("#")[0];
-  return /\.pdf$/i.test(path);
-}
-
-function getPackagePdfRaw(pkg) {
-  return String(pkg?.pdf_url ?? pkg?.pdfUrl ?? "").trim();
-}
-
-/** True only when a PDF was uploaded via the admin PDF field (not cover image). */
-function hasPackagePdfUpload(pkg) {
-  const pdfRaw = getPackagePdfRaw(pkg);
-  if (!isPdfAssetUrl(pdfRaw)) return false;
-  const imageRaw = String(pkg?.image ?? "").trim();
-  if (imageRaw && pdfRaw === imageRaw && !isPdfAssetUrl(imageRaw)) {
-    return false;
-  }
-  return true;
-}
-
-/** Resolved PDF URL for View Details (admin `pdf_url` only). */
-function getPackagePdfUrl(pkg) {
-  if (!hasPackagePdfUpload(pkg)) return "";
-  return resolveAnyUrl(getPackagePdfRaw(pkg));
-}
+import {
+  canViewPackagePdf,
+  getPackagePdfUrl,
+  hasPackagePdfUpload,
+  isPdfAssetUrl,
+  resolveAnyUrl,
+} from "../utils/packagePdf";
 
 /** Cover image for the card only (not used for View Details). Ignore PDF URLs in `image`. */
 function getPackageCoverPhotoUrl(pkg) {
@@ -200,9 +150,11 @@ const PackagesPage = ({ t, packages, packagesError, packagesLoading, onRetryPack
         {!showLoadingScreen && !packagesError && visiblePackages.length > 0 ? (
           visiblePackages.map((pkg) => {
             const pdfUrl = getPackagePdfUrl(pkg);
-            const hasPdf = hasPackagePdfUpload(pkg);
+            const canViewPdf = canViewPackagePdf(pkg);
+            const hasPdfField = hasPackagePdfUpload(pkg);
             const coverUrl = getPackageCoverPhotoUrl(pkg);
-            const showPlaceholder = !coverUrl && !hasPdf && !isPdfAssetUrl(pkg?.image);
+            const showPlaceholder =
+              !coverUrl && !canViewPdf && !isPdfAssetUrl(pkg?.image);
 
             return (
             <article className="package" key={pkg.id}>
@@ -246,11 +198,11 @@ const PackagesPage = ({ t, packages, packagesError, packagesLoading, onRetryPack
                 <button
                   type="button"
                   className="package-view-details btn-secondary"
-                  disabled={!hasPdf || !pdfUrl}
-                  aria-disabled={!hasPdf || !pdfUrl}
-                  title={!hasPdf || !pdfUrl ? t.viewDetailsNoPdf : undefined}
+                  disabled={!canViewPdf}
+                  aria-disabled={!canViewPdf}
+                  title={!canViewPdf ? t.viewDetailsNoPdf : undefined}
                   onClick={() => {
-                    if (!hasPdf || !pdfUrl) return;
+                    if (!canViewPdf || !pdfUrl) return;
                     window.open(pdfUrl, "_blank", "noopener,noreferrer");
                   }}
                 >

@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const { all, get, run, runInsert, initDb, ping } = require("./db");
+const { enrichPackageRow } = require("./packagePdf");
 require("dotenv").config();
 
 const app = express();
@@ -164,7 +165,7 @@ app.post("/api/auth/login", async (req, res, next) => {
 app.get("/api/packages", async (_req, res, next) => {
   try {
     const rows = await all("SELECT * FROM packages ORDER BY id DESC");
-    res.json(rows);
+    res.json(rows.map((row) => enrichPackageRow(uploadsDir, row)));
   } catch (err) {
     next(err);
   }
@@ -419,7 +420,7 @@ app.post("/api/uploads", authenticateToken, upload.single("file"), (req, res) =>
     return;
   }
 
-  const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+  const fileUrl = `/uploads/${req.file.filename}`;
   const kind = req.file.mimetype === "application/pdf" ? "pdf" : "image";
   res.status(201).json({ url: fileUrl, kind });
 });
@@ -463,7 +464,7 @@ app.post("/api/packages", authenticateToken, async (req, res, next) => {
     );
 
     const created = await get("SELECT * FROM packages WHERE id = ?", [result.lastID]);
-    res.status(201).json(created);
+    res.status(201).json(enrichPackageRow(uploadsDir, created));
   } catch (err) {
     next(err);
   }
@@ -508,7 +509,7 @@ app.put("/api/packages/:id", authenticateToken, async (req, res, next) => {
     }
 
     const updated = await get("SELECT * FROM packages WHERE id = ?", [id]);
-    res.json(updated);
+    res.json(enrichPackageRow(uploadsDir, updated));
   } catch (err) {
     next(err);
   }
