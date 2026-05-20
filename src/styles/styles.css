@@ -991,11 +991,14 @@ svg {
   text-align: center;
 }
 
-.package-view-details:disabled {
-  opacity: 0.55;
+.package-view-details:disabled,
+.package-view-details[aria-disabled="true"] {
+  opacity: 0.5;
   cursor: not-allowed;
+  pointer-events: none;
   background: #e2e8f0;
   color: #94a3b8;
+  transform: none;
 }
 
 .form-success-panel {

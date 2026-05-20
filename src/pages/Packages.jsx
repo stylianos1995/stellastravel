@@ -31,15 +31,33 @@ function resolveAnyUrl(raw) {
   return s;
 }
 
+/** True when the stored path/URL points at a PDF file (admin `pdf_url` / `pdfUrl` only). */
+function isPdfAssetUrl(raw) {
+  const s = String(raw ?? "").trim();
+  if (!s) return false;
+  const path = s.split("?")[0].split("#")[0];
+  return /\.pdf$/i.test(path);
+}
+
+function getPackagePdfRaw(pkg) {
+  return String(pkg?.pdf_url ?? pkg?.pdfUrl ?? "").trim();
+}
+
 /** True only when a PDF was uploaded via the admin PDF field (not cover image). */
 function hasPackagePdfUpload(pkg) {
-  return Boolean(String(pkg?.pdf_url ?? pkg?.pdfUrl ?? "").trim());
+  const pdfRaw = getPackagePdfRaw(pkg);
+  if (!isPdfAssetUrl(pdfRaw)) return false;
+  const imageRaw = String(pkg?.image ?? "").trim();
+  if (imageRaw && pdfRaw === imageRaw && !isPdfAssetUrl(imageRaw)) {
+    return false;
+  }
+  return true;
 }
 
 /** Resolved PDF URL for View Details (admin `pdf_url` only). */
 function getPackagePdfUrl(pkg) {
   if (!hasPackagePdfUpload(pkg)) return "";
-  return resolveAnyUrl(pkg?.pdf_url ?? pkg?.pdfUrl ?? "");
+  return resolveAnyUrl(getPackagePdfRaw(pkg));
 }
 
 /** Cover image for the card only (not used for View Details). Ignore PDF URLs in `image`. */
@@ -63,7 +81,7 @@ const PackagesPage = ({ t, packages, packagesError, packagesLoading, onRetryPack
   const [currentPage, setCurrentPage] = useState(1);
   const [inquiryPackage, setInquiryPackage] = useState(null);
   const [showLoadingScreen, setShowLoadingScreen] = useState(true);
-  const packagesPerPage = 6;
+  const packagesPerPage = 8;
 
   useEffect(() => {
     if (packagesLoading) {
@@ -184,7 +202,7 @@ const PackagesPage = ({ t, packages, packagesError, packagesLoading, onRetryPack
             const pdfUrl = getPackagePdfUrl(pkg);
             const hasPdf = hasPackagePdfUpload(pkg);
             const coverUrl = getPackageCoverPhotoUrl(pkg);
-            const showPlaceholder = !coverUrl && !hasPdf;
+            const showPlaceholder = !coverUrl && !hasPdf && !isPdfAssetUrl(pkg?.image);
 
             return (
             <article className="package" key={pkg.id}>
@@ -228,10 +246,11 @@ const PackagesPage = ({ t, packages, packagesError, packagesLoading, onRetryPack
                 <button
                   type="button"
                   className="package-view-details btn-secondary"
-                  disabled={!hasPdf}
-                  title={!hasPdf ? t.viewDetailsNoPdf : undefined}
+                  disabled={!hasPdf || !pdfUrl}
+                  aria-disabled={!hasPdf || !pdfUrl}
+                  title={!hasPdf || !pdfUrl ? t.viewDetailsNoPdf : undefined}
                   onClick={() => {
-                    if (!pdfUrl) return;
+                    if (!hasPdf || !pdfUrl) return;
                     window.open(pdfUrl, "_blank", "noopener,noreferrer");
                   }}
                 >
