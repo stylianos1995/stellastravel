@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FacebookIcon, InstagramIcon } from "./SocialIcons";
+import deverseLogo from "../assets/Deverse.png";
 
 const Footer = ({ t }) => {
   return (
@@ -44,38 +44,28 @@ const Footer = ({ t }) => {
             </li>
           </ul>
         </section>
-
-        <section>
-          <h4>{t.footerFollow}</h4>
-          <div className="social-links">
-            <a
-              href="https://www.instagram.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="social-link"
-              aria-label={t.footerInstagram}
-            >
-              <InstagramIcon />
-            </a>
-            <a
-              href="https://www.facebook.com/stellastravelagency/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="social-link"
-              aria-label={t.footerFacebook}
-            >
-              <FacebookIcon />
-            </a>
-          </div>
-        </section>
       </div>
 
-      <p className="footer-copy">
-        © {new Date().getFullYear()} Stellas Travel Agency. {t.rights}{" "}
-        <Link to="/privacy" className="footer-legal-link">
-          {t.footerPrivacy}
-        </Link>
-      </p>
+      <div className="footer-bar">
+        <p className="footer-copy">
+          © {new Date().getFullYear()} Stellas Travel Agency. {t.rights}{" "}
+          <Link to="/privacy" className="footer-legal-link">
+            {t.footerPrivacy}
+          </Link>
+        </p>
+        <p className="footer-powered">
+          <span>{t.footerPoweredBy}</span>{" "}
+          <a
+            href="https://deverse-pi.vercel.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="footer-powered-link"
+            aria-label={t.footerPoweredByLinkLabel}
+          >
+            <img src={deverseLogo} alt="" className="footer-powered-logo" />
+          </a>
+        </p>
+      </div>
     </footer>
   );
 };

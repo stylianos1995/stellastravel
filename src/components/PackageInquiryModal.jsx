@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { createPackageInquiry } from "../api";
-import { formatTravelDateDisplay } from "../utils/formatTravelDateDisplay";
 
 const initialForm = {
   firstName: "",
@@ -189,11 +188,6 @@ const PackageInquiryModal = ({ t, pkg, onClose }) => {
               min={todayInput}
               onChange={(e) => setField("preferredTravelDate", e.target.value)}
             />
-            {formData.preferredTravelDate ? (
-              <span className="ticket-date-dmy">
-                {formatTravelDateDisplay(formData.preferredTravelDate)}
-              </span>
-            ) : null}
           </label>
 
           <div className="admin-span-2 passenger-counters">

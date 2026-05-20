@@ -232,10 +232,16 @@ svg {
 .hero-section {
   position: relative;
   overflow: hidden;
-  border-radius: 24px;
+  border-radius: 0;
   background-color: #0f172a;
-  min-height: 440px;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.24);
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  margin-top: -24px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  box-shadow: none;
 }
 
 .hero-bg-image {
@@ -245,6 +251,160 @@ svg {
   height: 100%;
   object-fit: cover;
   object-position: center;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    100deg,
+    rgba(11, 42, 74, 0.9) 0%,
+    rgba(11, 42, 74, 0.72) 38%,
+    rgba(15, 23, 42, 0.35) 68%,
+    rgba(15, 23, 42, 0.15) 100%
+  );
+}
+
+.hero-about {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: inherit;
+  padding: clamp(96px, 12vh, 120px) clamp(20px, 5vw, 56px) clamp(40px, 8vh, 72px);
+  padding-top: clamp(96px, 18vh, 140px);
+  scroll-margin-top: 72px;
+}
+
+.hero-about-inner {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 260px);
+  gap: clamp(24px, 4vw, 48px);
+  align-items: start;
+}
+
+.hero-about-animate {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.75s ease,
+    transform 0.75s ease;
+}
+
+.hero-about--visible .hero-about-eyebrow {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.1s;
+}
+
+.hero-about--visible #hero-about-title {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.25s;
+}
+
+.hero-about--visible .hero-about-body p:nth-child(1) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.4s;
+}
+
+.hero-about--visible .hero-about-body p:nth-child(2) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.55s;
+}
+
+.hero-about--visible .hero-about-profile .about-profile-frame {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.35s;
+}
+
+.hero-about--visible .hero-about-profile .about-profile-caption {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.5s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-about-animate {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+.hero-about-eyebrow {
+  color: #93c5fd;
+}
+
+.hero-about h2 {
+  margin: 6px 0 14px;
+  color: #f8fafc;
+  font-size: clamp(1.55rem, 3.6vw, 2.35rem);
+  line-height: 1.2;
+}
+
+.hero-about-body p {
+  margin: 0;
+  color: #e2e8f0;
+  line-height: 1.65;
+  font-size: clamp(0.95rem, 1.7vw, 1.05rem);
+}
+
+.hero-about-body p + p {
+  margin-top: 14px;
+}
+
+.hero-about-profile {
+  margin: 10vh 0 0;
+  justify-self: end;
+  width: 100%;
+  max-width: 260px;
+}
+
+.hero-about-profile .about-profile-frame {
+  width: min(260px, 100%);
+  border: 4px solid #0b2a4a;
+  background: #0b2a4a;
+  box-shadow: 0 16px 40px rgba(2, 6, 23, 0.45);
+}
+
+.hero-about-profile .about-profile-frame--logo {
+  background: #0b2a4a;
+}
+
+.hero-about-profile .about-profile-caption {
+  color: #f1f5f9;
+}
+
+.hero-profile-social {
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.hero-social-link {
+  background: rgba(11, 42, 74, 0.85);
+  border-color: rgba(147, 197, 253, 0.45);
+  color: #f8fafc;
+}
+
+.hero-social-link:hover {
+  background: #1d4ed8;
+  border-color: #93c5fd;
+  color: #ffffff;
+}
+
+.hero-about--visible .hero-about-profile .hero-profile-social {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.65s;
 }
 
 .eyebrow {
@@ -1115,7 +1275,7 @@ svg {
   font-weight: 600;
 }
 
-.admin-form input,
+.admin-form input:not([type="checkbox"]),
 .admin-form select,
 .admin-form textarea {
   width: 100%;
@@ -1124,6 +1284,16 @@ svg {
   border-radius: 8px;
   padding: 10px;
   font: inherit;
+}
+
+.admin-form input[type="checkbox"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  max-width: none;
+  padding: 0;
+  margin: 0;
+  flex: 0 0 auto;
+  accent-color: #1d4ed8;
 }
 
 .admin-span-2 {
@@ -1426,32 +1596,109 @@ svg {
 }
 
 .ticket-travel-block {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  align-items: end;
-  grid-template-columns: minmax(0, 1fr) auto;
 }
 
-.ticket-travel-block.has-return {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+.ticket-travel-dates {
+  --ticket-date-field-width: min(280px, 100%);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: var(--ticket-date-field-width);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.ticket-travel-block.has-return .ticket-travel-dates {
+  grid-template-columns: repeat(2, var(--ticket-date-field-width));
 }
 
 .ticket-travel-field {
   margin: 0;
+  width: var(--ticket-date-field-width);
+  max-width: 100%;
+  min-width: 0;
 }
 
-.ticket-date-dmy {
-  display: block;
-  margin-top: 6px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #475569;
-  letter-spacing: 0.02em;
+.admin-form label.checkbox-row {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+}
+
+.admin-form label.ticket-return-check {
+  gap: 10px !important;
 }
 
 .ticket-return-check {
   margin: 0;
-  padding-bottom: 2px;
+  width: auto;
+  align-self: flex-start;
+  justify-content: flex-start;
+  cursor: pointer;
+}
+
+.ticket-return-check input[type="checkbox"] {
+  margin: 0;
+}
+
+.ticket-return-check span {
+  flex: 0 1 auto;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+html[lang="el"] .ticket-return-check span {
+  font-size: 0.95rem;
+}
+
+@media (max-width: 420px) {
+  html[lang="el"] .ticket-return-check span {
+    font-size: 0.85rem;
+  }
+}
+
+.ticket-request-form {
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+}
+
+.ticket-request-form .transport-choice-btn {
+  min-width: min(180px, 100%);
+  padding: 14px 22px;
+  line-height: 1.4;
+}
+
+.ticket-request-form .passenger-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 168px), 1fr));
+}
+
+.ticket-request-form .passenger-counter {
+  padding: 12px 14px;
+}
+
+html[lang="el"] .ticket-request-form {
+  grid-template-columns: repeat(2, minmax(300px, 1fr));
+}
+
+html[lang="el"] .ticket-request-form .transport-choice-btn {
+  min-width: min(200px, 100%);
+  padding: 12px 24px;
+}
+
+html[lang="el"] .ticket-request-form .passenger-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+}
+
+html[lang="el"] .ticket-travel-field {
+  line-height: 1.4;
+}
+
+@media (max-width: 1100px) {
+  html[lang="el"] .ticket-travel-block.has-return .ticket-travel-dates {
+    grid-template-columns: var(--ticket-date-field-width);
+  }
 }
 
 .ticket-dob-field {
@@ -1557,7 +1804,6 @@ svg {
 .checkbox-row {
   flex-direction: row !important;
   align-items: center;
-  gap: 10px !important;
 }
 
 .weekly-hours-section {
@@ -1621,7 +1867,7 @@ svg {
   width: min(1120px, 100%);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1.2fr 1fr 0.9fr;
+  grid-template-columns: 1.2fr 1fr;
   gap: 24px;
 }
 
@@ -1695,11 +1941,20 @@ svg {
   transform: translateY(-2px);
 }
 
-.footer-copy {
+.footer-bar {
   width: min(1120px, 100%);
   margin: 20px auto 0;
   padding-top: 14px;
   border-top: 1px solid rgba(191, 219, 254, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+
+.footer-copy {
+  margin: 0;
   color: #93c5fd;
   font-size: 0.9rem;
 }
@@ -1708,6 +1963,44 @@ svg {
   color: #bfdbfe;
   margin-left: 0.5em;
   text-decoration: underline;
+}
+
+.footer-powered {
+  margin: 0;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  color: #93c5fd;
+  font-size: 0.88rem;
+}
+
+.footer-powered-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  height: fit-content;
+  line-height: 0;
+  text-decoration: none;
+  border-radius: 8px;
+  padding: 2px 2px;
+  box-sizing: border-box;
+  background: rgba(248, 250, 252, 0.95);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.footer-powered-link:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.footer-powered-logo {
+  display: block;
+  height: 45px;
+  width: auto;
+  object-fit: contain;
 }
 
 .footer-legal-link:hover {
@@ -1822,7 +2115,9 @@ body.cookie-banner-open .page-content {
 }
 
 @media (max-width: 900px) {
-  .admin-form {
+  .admin-form,
+  .ticket-request-form,
+  html[lang="el"] .ticket-request-form {
     grid-template-columns: 1fr;
   }
 
@@ -1930,8 +2225,31 @@ body.cookie-banner-open .page-content {
   }
 
   .hero-section {
-    min-height: 280px;
-    border-radius: 16px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    border-radius: 0;
+  }
+
+  .hero-about {
+    align-items: flex-start;
+    padding-top: clamp(88px, 14vh, 108px);
+    padding-bottom: 32px;
+  }
+
+  .hero-about-inner {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .hero-about-profile {
+    justify-self: center;
+    max-width: 220px;
+    margin-top: 12vh;
+  }
+
+  .hero-about-profile .about-profile-frame {
+    width: min(220px, 72vw);
   }
 
   .about-us,
@@ -1988,13 +2306,8 @@ body.cookie-banner-open .page-content {
     font-size: 0.9rem;
   }
 
-  .ticket-travel-block,
-  .ticket-travel-block.has-return {
-    grid-template-columns: 1fr;
-  }
-
-  .ticket-return-check {
-    align-items: flex-start;
+  .ticket-travel-block.has-return .ticket-travel-dates {
+    grid-template-columns: var(--ticket-date-field-width);
   }
 
   .transport-choice-btn {

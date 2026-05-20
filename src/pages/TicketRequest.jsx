@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { createTicketRequest } from "../api";
-import { formatTravelDateDisplay } from "../utils/formatTravelDateDisplay";
 
 const airplaneOptionsEn = [
   "Athens Airport (ATH)",
@@ -217,7 +216,7 @@ const TicketRequest = ({ t, lang }) => {
           </button>
         </div>
       ) : (
-      <form className="admin-form" onSubmit={handleSubmit} aria-busy={submitting}>
+      <form className="admin-form ticket-request-form" onSubmit={handleSubmit} aria-busy={submitting}>
         <label>
           {t.firstName}
           <input
@@ -263,41 +262,37 @@ const TicketRequest = ({ t, lang }) => {
         <div
           className={`ticket-travel-block admin-span-2${formData.hasReturn ? " has-return" : ""}`}
         >
-          <label className="ticket-travel-field">
-            {t.travelDate}
-            <input
-              type="date"
-              value={formData.travelDate}
-              min={travelDateMin}
-              onChange={handleTravelDateChange}
-              required
-            />
-            {formData.travelDate ? (
-              <span className="ticket-date-dmy">{formatTravelDateDisplay(formData.travelDate)}</span>
-            ) : null}
-          </label>
-          {formData.hasReturn ? (
-            <label className="ticket-return-date">
-              {t.returnDate}
+          <div className="ticket-travel-dates">
+            <label className="ticket-travel-field">
+              {t.travelDate}
               <input
                 type="date"
-                value={formData.returnDate}
-                min={returnDateMin}
-                onChange={(e) => setField("returnDate", e.target.value)}
-                required={formData.hasReturn}
+                value={formData.travelDate}
+                min={travelDateMin}
+                onChange={handleTravelDateChange}
+                required
               />
-              {formData.returnDate ? (
-                <span className="ticket-date-dmy">{formatTravelDateDisplay(formData.returnDate)}</span>
-              ) : null}
             </label>
-          ) : null}
+            {formData.hasReturn ? (
+              <label className="ticket-travel-field ticket-return-date">
+                {t.returnDate}
+                <input
+                  type="date"
+                  value={formData.returnDate}
+                  min={returnDateMin}
+                  onChange={(e) => setField("returnDate", e.target.value)}
+                  required={formData.hasReturn}
+                />
+              </label>
+            ) : null}
+          </div>
           <label className="checkbox-row ticket-return-check">
+            <span>{t.returnTicket}</span>
             <input
               type="checkbox"
               checked={formData.hasReturn}
               onChange={handleHasReturnChange}
             />
-            <span>{t.returnTicket}</span>
           </label>
         </div>
 

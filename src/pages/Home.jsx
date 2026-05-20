@@ -1,8 +1,9 @@
-import React, { useState } from "react";
-import heroWallpaper from "../assets/hero.png";
+import React, { useEffect, useRef, useState } from "react";
+import heroWallpaper from "../assets/hero2.jpg";
 import brandLogo from "../assets/logo.png";
 import stellaProfile from "../assets/Stella.png";
 import WeeklyHours from "../components/WeeklyHours";
+import { FacebookIcon, InstagramIcon } from "../components/SocialIcons";
 import { partnerAgencies } from "../Data/partnerAgencies";
 
 function partnerWebsiteHref(raw) {
@@ -15,47 +16,94 @@ function partnerWebsiteHref(raw) {
 
 const Home = ({ t }) => {
   const [profileFallback, setProfileFallback] = useState(false);
+  const [heroAboutVisible, setHeroAboutVisible] = useState(false);
+  const heroAboutRef = useRef(null);
   const profileSrc = profileFallback ? brandLogo : stellaProfile;
+
+  useEffect(() => {
+    const node = heroAboutRef.current;
+    if (!node) return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setHeroAboutVisible(true);
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <section className="home">
-      <div className="hero-section">
+      <div className="hero-section" id="home">
         <img
           src={heroWallpaper}
-          alt="Stellas Travel Agency hero wallpaper"
+          alt=""
           className="hero-bg-image"
+          decoding="async"
+          fetchPriority="high"
         />
-      </div>
-
-      <section className="about-us" id="about-us">
-        <div className="about-us-layout">
-          <div className="about-us-intro">
-            <p className="eyebrow">{t.aboutEyebrow}</p>
-            <h2>{t.aboutTitle}</h2>
-            <div className="about-us-body">
-              <p>{t.aboutBody1}</p>
-              <p>{t.aboutBody2}</p>
+        <div className="hero-overlay" aria-hidden="true" />
+        <section
+          ref={heroAboutRef}
+          className={`hero-about${heroAboutVisible ? " hero-about--visible" : ""}`}
+          id="about-us"
+          aria-labelledby="hero-about-title"
+        >
+          <div className="hero-about-inner">
+            <div className="hero-about-text">
+              <p className="eyebrow hero-about-eyebrow hero-about-animate">{t.aboutEyebrow}</p>
+              <h2 id="hero-about-title" className="hero-about-animate">
+                {t.aboutTitle}
+              </h2>
+              <div className="hero-about-body">
+                <p className="hero-about-animate">{t.aboutBody1}</p>
+                <p className="hero-about-animate">{t.aboutBody2}</p>
+              </div>
             </div>
+            <figure className="hero-about-profile">
+              <div
+                className={`about-profile-frame hero-about-animate${profileFallback ? " about-profile-frame--logo" : ""}`}
+              >
+                <img
+                  src={profileSrc}
+                  alt={t.aboutProfileAlt}
+                  className="about-profile-img"
+                  decoding="async"
+                  onError={() => {
+                    if (!profileFallback) setProfileFallback(true);
+                  }}
+                />
+              </div>
+              <figcaption className="about-profile-caption hero-about-animate">
+                {t.aboutProfileCaption}
+              </figcaption>
+              <div className="hero-profile-social social-links hero-about-animate">
+                <a
+                  href="https://www.instagram.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="social-link hero-social-link"
+                  aria-label={t.footerInstagram}
+                >
+                  <InstagramIcon />
+                </a>
+                <a
+                  href="https://www.facebook.com/stellastravelagency/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="social-link hero-social-link"
+                  aria-label={t.footerFacebook}
+                >
+                  <FacebookIcon />
+                </a>
+              </div>
+            </figure>
           </div>
-          <figure className="about-us-profile">
-            <div
-              className={`about-profile-frame${profileFallback ? " about-profile-frame--logo" : ""}`}
-            >
-              <img
-                src={profileSrc}
-                alt={t.aboutProfileAlt}
-                className="about-profile-img"
-                loading="lazy"
-                decoding="async"
-                onError={() => {
-                  if (!profileFallback) setProfileFallback(true);
-                }}
-              />
-            </div>
-            <figcaption className="about-profile-caption">{t.aboutProfileCaption}</figcaption>
-          </figure>
-        </div>
-      </section>
+        </section>
+      </div>
 
       {partnerAgencies.length > 0 ? (
         <section className="partners-section" id="partners" aria-labelledby="partners-heading">
