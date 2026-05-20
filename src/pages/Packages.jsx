@@ -52,6 +52,9 @@ function getPackageCoverPhotoUrl(pkg) {
 
 const PRICE_SLIDER_MAX = 10000;
 
+/** Packages are fetched on app load (often before this page opens), so keep the loader visible briefly here. */
+const PACKAGES_LOADER_MIN_MS = 900;
+
 const PackagesPage = ({ t, packages, packagesError, packagesLoading, onRetryPackages }) => {
   const [country, setCountry] = useState("");
   const [priceMin, setPriceMin] = useState(0);
@@ -59,7 +62,17 @@ const PackagesPage = ({ t, packages, packagesError, packagesLoading, onRetryPack
   const [duration, setDuration] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [inquiryPackage, setInquiryPackage] = useState(null);
+  const [showLoadingScreen, setShowLoadingScreen] = useState(true);
   const packagesPerPage = 6;
+
+  useEffect(() => {
+    if (packagesLoading) {
+      setShowLoadingScreen(true);
+      return;
+    }
+    const timer = window.setTimeout(() => setShowLoadingScreen(false), PACKAGES_LOADER_MIN_MS);
+    return () => window.clearTimeout(timer);
+  }, [packagesLoading]);
 
   const filteredPackages = packages.filter((pkg) => {
     const pkgCountry = (pkg.country ?? "").toLowerCase();
@@ -104,7 +117,7 @@ const PackagesPage = ({ t, packages, packagesError, packagesLoading, onRetryPack
         <p>{t.packagesText}</p>
       </div>
 
-      {packagesLoading ? (
+      {showLoadingScreen ? (
         <PackagesLoadingScreen message={t.packagesLoading} />
       ) : (
         <>
@@ -166,7 +179,7 @@ const PackagesPage = ({ t, packages, packagesError, packagesLoading, onRetryPack
       ) : null}
 
       <div className="packages-list">
-        {!packagesLoading && !packagesError && visiblePackages.length > 0 ? (
+        {!showLoadingScreen && !packagesError && visiblePackages.length > 0 ? (
           visiblePackages.map((pkg) => {
             const pdfUrl = getPackagePdfUrl(pkg);
             const hasPdf = hasPackagePdfUpload(pkg);
@@ -228,7 +241,7 @@ const PackagesPage = ({ t, packages, packagesError, packagesLoading, onRetryPack
             </article>
             );
           })
-        ) : !packagesLoading && !packagesError ? (
+        ) : !showLoadingScreen && !packagesError ? (
           <p className="empty-state">{t.noPackages}</p>
         ) : null}
       </div>
