@@ -168,9 +168,12 @@ async function initDb({ adminUsername, adminPassword }) {
     )
   `);
 
+  const passwordHash = await bcrypt.hash(adminPassword, 10);
   const admin = await get("SELECT id FROM admins WHERE username = ?", [adminUsername]);
-  if (!admin) {
-    const passwordHash = await bcrypt.hash(adminPassword, 10);
+  if (admin) {
+    await run("UPDATE admins SET password_hash = ? WHERE id = ?", [passwordHash, admin.id]);
+  } else {
+    await run("DELETE FROM admins WHERE username = ?", ["admin"]);
     await run("INSERT INTO admins (username, password_hash) VALUES (?, ?)", [
       adminUsername,
       passwordHash,

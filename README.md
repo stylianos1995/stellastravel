@@ -35,8 +35,8 @@ Optional `.env` in the project root (loaded via `dotenv`):
 | `PORT`           | API listen port                              | `5000`                                      |
 | `JWT_SECRET`     | Sign/verify admin tokens                     | `change-me-secret` (override in production) |
 | `JWT_EXPIRES_IN` | Admin JWT lifetime (e.g. `12h`, `7d`, `30d`) | `30d`                                       |
-| `ADMIN_USERNAME` | Seed admin user                              | `admin`                                     |
-| `ADMIN_PASSWORD` | Seed admin password                          | `admin123`                                  |
+| `ADMIN_USERNAME` | Admin login username                         | `Dimste` (set in env)                       |
+| `ADMIN_PASSWORD` | Admin login password                         | Set in env (synced on API startup)          |
 | `ACCESS_CONTROL_ALLOW_ORIGIN` | Optional fixed CORS origin (e.g. `https://stellastravel.vercel.app`). If unset, the API sends `Access-Control-Allow-Origin: *` so all Vercel preview URLs work. | `*` (wildcard) |
 | `SEED_DEMO_OVERDUE_TICKET` | Seed a demo overdue ticket in admin | enabled unless `false` |
 
@@ -211,7 +211,7 @@ On the same **Environment** tab for your web service, confirm or add:
 | `DATABASE_URL` | From Step 2 (required) |
 | `JWT_SECRET` | Long random string (keep stable — changing it logs everyone out) |
 | `ADMIN_USERNAME` | Your admin login |
-| `ADMIN_PASSWORD` | Strong password (not the default `admin123` on production) |
+| `ADMIN_PASSWORD` | Your chosen admin password |
 | `SEED_DEMO_OVERDUE_TICKET` | `false` (optional; avoids demo ticket in admin) |
 
 You do **not** need `DATABASE_SSL` on Render if the URL contains `render.com` (SSL is auto-detected). If connection fails, add `DATABASE_SSL` = `true`.
