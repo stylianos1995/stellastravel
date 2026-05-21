@@ -190,40 +190,10 @@ async function initDb({ adminUsername, adminPassword }) {
     }
   }
 
-  const demoOverdueTicket = await get(
-    "SELECT id FROM ticket_requests WHERE first_name = ? AND last_name = ?",
+  await run(
+    "DELETE FROM ticket_requests WHERE first_name = ? AND last_name = ?",
     ["Demo", "Overdue"]
   );
-  if (!demoOverdueTicket && process.env.SEED_DEMO_OVERDUE_TICKET !== "false") {
-    const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
-    const travelDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    await run(
-      `INSERT INTO ticket_requests
-      (first_name, last_name, date_of_birth, travel_date, return_date, from_destination, to_destination, transport_type, people_count, adults_count, children_count, babies_count, notes, mobile_country_code, mobile_number, airplane_luggage, boat_has_car, created_at, is_checked)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        "Demo",
-        "Overdue",
-        "1990-05-15",
-        travelDate,
-        "",
-        "Athens Airport (ATH)",
-        "Thessaloniki Airport (SKG)",
-        "airplane",
-        2,
-        2,
-        0,
-        0,
-        "Demo ticket for overdue styling — safe to delete from Admin.",
-        "+30",
-        "6900000000",
-        1,
-        null,
-        eightDaysAgo,
-        0,
-      ]
-    );
-  }
 }
 
 async function ping() {

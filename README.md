@@ -38,7 +38,6 @@ Optional `.env` in the project root (loaded via `dotenv`):
 | `ADMIN_USERNAME` | Admin login username                         | `Dimste` (set in env)                       |
 | `ADMIN_PASSWORD` | Admin login password                         | Set in env (synced on API startup)          |
 | `ACCESS_CONTROL_ALLOW_ORIGIN` | Optional fixed CORS origin (e.g. `https://stellastravel.vercel.app`). If unset, the API sends `Access-Control-Allow-Origin: *` so all Vercel preview URLs work. | `*` (wildcard) |
-| `SEED_DEMO_OVERDUE_TICKET` | Seed a demo overdue ticket in admin | enabled unless `false` |
 
 On first startup, if no row exists for `ADMIN_USERNAME`, an admin account is inserted with a bcrypt hash of `ADMIN_PASSWORD`.
 
@@ -212,7 +211,6 @@ On the same **Environment** tab for your web service, confirm or add:
 | `JWT_SECRET` | Long random string (keep stable — changing it logs everyone out) |
 | `ADMIN_USERNAME` | Your admin login |
 | `ADMIN_PASSWORD` | Your chosen admin password |
-| `SEED_DEMO_OVERDUE_TICKET` | `false` (optional; avoids demo ticket in admin) |
 
 You do **not** need `DATABASE_SSL` on Render if the URL contains `render.com` (SSL is auto-detected). If connection fails, add `DATABASE_SSL` = `true`.
 
