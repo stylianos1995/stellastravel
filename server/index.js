@@ -16,6 +16,9 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "30d";
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
+const UPLOAD_MAX_MB = Math.max(1, Number(process.env.UPLOAD_MAX_MB) || 25);
+const UPLOAD_MAX_BYTES = UPLOAD_MAX_MB * 1024 * 1024;
+
 const uploadsDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
@@ -31,7 +34,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: UPLOAD_MAX_BYTES },
   fileFilter: (_req, file, cb) => {
     const isImage = file.mimetype.startsWith("image/");
     const isPdf = file.mimetype === "application/pdf";
@@ -539,6 +542,14 @@ app.use((err, req, res, _next) => {
   }
   if (err && (err.code === "57P01" || err.code === "ECONNREFUSED" || err.code === "ENOTFOUND")) {
     res.status(503).json({ message: "Database unavailable. Please try again shortly." });
+    return;
+  }
+  if (err && err.code === "LIMIT_FILE_SIZE") {
+    res.status(413).json({ message: `File is too large. Maximum size is ${UPLOAD_MAX_MB} MB.` });
+    return;
+  }
+  if (err && err.message === "Only image or PDF files are allowed.") {
+    res.status(400).json({ message: err.message });
     return;
   }
   const message =

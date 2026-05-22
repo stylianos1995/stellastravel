@@ -15,6 +15,7 @@ import {
 } from "../api";
 import { formatTravelDateDisplay } from "../utils/formatTravelDateDisplay";
 import { isAdminRequestOverdue } from "../utils/isAdminRequestOverdue";
+import { MAX_UPLOAD_BYTES } from "../utils/uploadLimits";
 import {
   AirplaneCategoryIcon,
   BoatCategoryIcon,
@@ -32,13 +33,14 @@ import {
 } from "../components/AdminNavIcons";
 
 const TICKETS_PER_CATEGORY_PAGE = 5;
+const ADMIN_PACKAGES_PER_PAGE = 8;
 
-function paginateCategoryItems(items, page) {
-  const totalPages = Math.max(1, Math.ceil(items.length / TICKETS_PER_CATEGORY_PAGE));
+function paginateList(items, page, perPage) {
+  const totalPages = Math.max(1, Math.ceil(items.length / perPage));
   const safePage = Math.min(Math.max(1, page), totalPages);
-  const start = (safePage - 1) * TICKETS_PER_CATEGORY_PAGE;
+  const start = (safePage - 1) * perPage;
   return {
-    pageItems: items.slice(start, start + TICKETS_PER_CATEGORY_PAGE),
+    pageItems: items.slice(start, start + perPage),
     totalPages,
     safePage,
   };
@@ -81,11 +83,17 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
   const [boatTicketPage, setBoatTicketPage] = useState(1);
   const [inquiryQuery, setInquiryQuery] = useState("");
   const [inquiryStatusFilter, setInquiryStatusFilter] = useState("all");
+  const [packageListPage, setPackageListPage] = useState(1);
 
   useEffect(() => {
     setAirplaneTicketPage(1);
     setBoatTicketPage(1);
   }, [ticketQuery, ticketStatusFilter]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(packages.length / ADMIN_PACKAGES_PER_PAGE));
+    setPackageListPage((prev) => Math.min(prev, totalPages));
+  }, [packages.length]);
 
   const loadInbox = async (authToken) => {
     try {
@@ -209,6 +217,11 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
     const file = event.target.files?.[0];
     const input = event.target;
     if (!file) return;
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setPdfUpload({ status: "error", message: t.adminFileTooLarge, fileName: "" });
+      input.value = "";
+      return;
+    }
     const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name || "");
     if (!isPdf) {
       setPdfUpload({ status: "error", message: t.adminPdfOnly, fileName: "" });
@@ -230,6 +243,11 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
     const file = event.target.files?.[0];
     const input = event.target;
     if (!file) return;
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setCoverUpload({ status: "error", message: t.adminFileTooLarge, fileName: "" });
+      input.value = "";
+      return;
+    }
     const isImage = file.type.startsWith("image/");
     if (!isImage) {
       setCoverUpload({ status: "error", message: t.adminImageOnly, fileName: "" });
@@ -368,8 +386,9 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
     (item) => item.transport_type !== "airplane" && item.transport_type !== "boat"
   );
 
-  const airplanePaginated = paginateCategoryItems(airplaneTickets, airplaneTicketPage);
-  const boatPaginated = paginateCategoryItems(boatTickets, boatTicketPage);
+  const airplanePaginated = paginateList(airplaneTickets, airplaneTicketPage, TICKETS_PER_CATEGORY_PAGE);
+  const boatPaginated = paginateList(boatTickets, boatTicketPage, TICKETS_PER_CATEGORY_PAGE);
+  const packagesPaginated = paginateList(packages, packageListPage, ADMIN_PACKAGES_PER_PAGE);
 
   const pendingTicketCount = ticketRequests.filter((item) => !item.is_checked).length;
   const pendingInquiryCount = packageInquiries.filter((item) => !item.is_checked).length;
@@ -635,24 +654,40 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
 
               <div className="admin-list">
                 <h3>{t.adminManageTitle}</h3>
-                {packages.map((pkg) => (
-                  <article className="admin-item" key={pkg.id}>
-                    <div>
-                      <strong>{pkg.name}</strong>
-                      <p>
-                        {pkg.country} | {t.currencySymbol}{pkg.price} | {pkg.duration} {t.days}
-                      </p>
-                    </div>
-                    <div className="admin-item-actions">
-                      <button type="button" className="btn-secondary" onClick={() => handleEdit(pkg)}>
-                        {t.adminEdit}
-                      </button>
-                      <button type="button" className="btn-secondary" onClick={() => handleDelete(pkg.id)}>
-                        {t.adminDelete}
-                      </button>
-                    </div>
-                  </article>
-                ))}
+                {packages.length > 0 ? (
+                  <>
+                    {packagesPaginated.pageItems.map((pkg) => (
+                      <article className="admin-item" key={pkg.id}>
+                        <div>
+                          <strong>{pkg.name}</strong>
+                          <p>
+                            {pkg.country} | {t.currencySymbol}
+                            {pkg.price} | {pkg.duration} {t.days}
+                          </p>
+                        </div>
+                        <div className="admin-item-actions">
+                          <button type="button" className="btn-secondary" onClick={() => handleEdit(pkg)}>
+                            {t.adminEdit}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={() => handleDelete(pkg.id)}
+                          >
+                            {t.adminDelete}
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                    {renderCategoryPagination(
+                      packagesPaginated.totalPages,
+                      packagesPaginated.safePage,
+                      setPackageListPage
+                    )}
+                  </>
+                ) : (
+                  <p className="empty-state">{t.adminNoPackages}</p>
+                )}
               </div>
             </>
           ) : activeSection === "tickets" ? (
