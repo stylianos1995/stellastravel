@@ -124,3 +124,31 @@ export const deletePackageInquiry = (id, token) =>
     method: "DELETE",
     headers: bearerHeaders(token),
   });
+
+export const getAnnouncements = () => request("/announcements");
+
+export const getAllAnnouncements = (token) =>
+  request("/announcements/all", {
+    method: "GET",
+    headers: bearerHeaders(token),
+  });
+
+export const createAnnouncement = (payload, token) =>
+  request("/announcements", {
+    method: "POST",
+    headers: bearerHeaders(token),
+    body: JSON.stringify(payload),
+  });
+
+export const updateAnnouncement = (id, payload, token) =>
+  request(`/announcements/${id}`, {
+    method: "PUT",
+    headers: bearerHeaders(token),
+    body: JSON.stringify(payload),
+  });
+
+export const deleteAnnouncement = (id, token) =>
+  request(`/announcements/${id}`, {
+    method: "DELETE",
+    headers: bearerHeaders(token),
+  });

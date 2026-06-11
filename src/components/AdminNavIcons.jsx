@@ -26,6 +26,14 @@ export function AdminTicketIcon({ className }) {
   );
 }
 
+export function AdminAnnouncementIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <path d="M4 10v4M8 8v8M12 6v12M16 8v8M20 10v4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function AdminInquiryIcon({ className }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">

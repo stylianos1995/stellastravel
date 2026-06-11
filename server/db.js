@@ -148,6 +148,17 @@ async function initDb({ adminUsername, adminPassword }) {
   await ensureColumn("ticket_requests", "notes", "TEXT DEFAULT ''");
 
   await run(`
+    CREATE TABLE IF NOT EXISTS announcements (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL DEFAULT '',
+      image TEXT DEFAULT '',
+      is_published INTEGER DEFAULT 1,
+      created_at TEXT NOT NULL
+    )
+  `);
+
+  await run(`
     CREATE TABLE IF NOT EXISTS package_inquiries (
       id SERIAL PRIMARY KEY,
       package_id INTEGER NOT NULL,

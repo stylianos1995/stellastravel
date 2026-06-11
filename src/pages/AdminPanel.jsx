@@ -1,15 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
+  createAnnouncement,
   createPackage,
+  deleteAnnouncement,
   deletePackageInquiry,
   deleteTicketRequest,
   deletePackage,
+  getAllAnnouncements,
   getPackageInquiries,
   getTicketRequests,
   loginAdmin,
   markPackageInquiryChecked,
   markTicketRequestChecked,
+  updateAnnouncement,
   updatePackage,
   uploadPackageAsset,
 } from "../api";
@@ -25,6 +29,7 @@ import AdminUploadFeedback from "../components/AdminUploadFeedback";
 
 const emptyUploadFeedback = () => ({ status: "", message: "", fileName: "" });
 import {
+  AdminAnnouncementIcon,
   AdminHomeIcon,
   AdminInquiryIcon,
   AdminLogoutIcon,
@@ -56,7 +61,14 @@ const emptyForm = {
   description: "",
 };
 
-const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
+const emptyAnnouncementForm = {
+  title: "",
+  body: "",
+  image: "",
+  isPublished: true,
+};
+
+const AdminPanel = ({ t, packages, setPackages, onPackagesError, onAnnouncementsChanged }) => {
   const navigate = useNavigate();
 
   const handleBackHome = (event) => {
@@ -84,6 +96,11 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
   const [inquiryQuery, setInquiryQuery] = useState("");
   const [inquiryStatusFilter, setInquiryStatusFilter] = useState("all");
   const [packageListPage, setPackageListPage] = useState(1);
+  const [announcementForm, setAnnouncementForm] = useState(emptyAnnouncementForm);
+  const [editingAnnouncementId, setEditingAnnouncementId] = useState(null);
+  const [announcements, setAnnouncements] = useState([]);
+  const [announcementError, setAnnouncementError] = useState("");
+  const [announcementImageUpload, setAnnouncementImageUpload] = useState(emptyUploadFeedback);
 
   useEffect(() => {
     setAirplaneTicketPage(1);
@@ -113,6 +130,20 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
     loadInbox(token);
   }, [token]);
 
+  const loadAnnouncements = async (authToken) => {
+    try {
+      const rows = await getAllAnnouncements(authToken);
+      setAnnouncements(Array.isArray(rows) ? rows : []);
+    } catch (_err) {
+      // Keep page usable even if announcements fetch fails.
+    }
+  };
+
+  useEffect(() => {
+    if (!token) return;
+    loadAnnouncements(token);
+  }, [token]);
+
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -123,6 +154,113 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
     setFormError("");
     setCoverUpload(emptyUploadFeedback());
     setPdfUpload(emptyUploadFeedback());
+  };
+
+  const resetAnnouncementForm = () => {
+    setAnnouncementForm(emptyAnnouncementForm);
+    setEditingAnnouncementId(null);
+    setAnnouncementError("");
+    setAnnouncementImageUpload(emptyUploadFeedback());
+  };
+
+  const handleAnnouncementChange = (field, value) => {
+    setAnnouncementForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAnnouncementSubmit = async (event) => {
+    event.preventDefault();
+
+    const nextAnnouncement = {
+      title: announcementForm.title.trim(),
+      body: announcementForm.body.trim(),
+      image: announcementForm.image.trim(),
+      isPublished: Boolean(announcementForm.isPublished),
+    };
+
+    if (!nextAnnouncement.title) {
+      setAnnouncementError(t.adminAnnouncementTitleRequired);
+      return;
+    }
+    if (!nextAnnouncement.body) {
+      setAnnouncementError(t.adminAnnouncementBodyRequired);
+      return;
+    }
+
+    try {
+      if (editingAnnouncementId) {
+        const updated = await updateAnnouncement(editingAnnouncementId, nextAnnouncement, token);
+        setAnnouncements((prev) =>
+          prev.map((item) => (item.id === editingAnnouncementId ? updated : item))
+        );
+      } else {
+        const created = await createAnnouncement(nextAnnouncement, token);
+        setAnnouncements((prev) => [created, ...prev]);
+      }
+      setAnnouncementError("");
+      resetAnnouncementForm();
+      onAnnouncementsChanged?.();
+    } catch (err) {
+      setAnnouncementError(err.message);
+    }
+  };
+
+  const handleAnnouncementEdit = (item) => {
+    setEditingAnnouncementId(item.id);
+    setAnnouncementForm({
+      title: item.title ?? "",
+      body: item.body ?? "",
+      image: item.image ?? "",
+      isPublished: Boolean(item.isPublished ?? item.is_published),
+    });
+    setAnnouncementError("");
+    setAnnouncementImageUpload(emptyUploadFeedback());
+  };
+
+  const handleAnnouncementDelete = async (id) => {
+    if (!window.confirm(t.adminAnnouncementDeleteConfirm)) {
+      return;
+    }
+    try {
+      await deleteAnnouncement(id, token);
+      setAnnouncements((prev) => prev.filter((item) => item.id !== id));
+      if (editingAnnouncementId === id) {
+        resetAnnouncementForm();
+      }
+      onAnnouncementsChanged?.();
+    } catch (err) {
+      setAnnouncementError(err.message);
+    }
+  };
+
+  const handleAnnouncementImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+    const input = event.target;
+    if (!file) return;
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setAnnouncementImageUpload({ status: "error", message: t.adminFileTooLarge, fileName: "" });
+      input.value = "";
+      return;
+    }
+    const isImage = file.type.startsWith("image/");
+    if (!isImage) {
+      setAnnouncementImageUpload({ status: "error", message: t.adminImageOnly, fileName: "" });
+      input.value = "";
+      return;
+    }
+    try {
+      setAnnouncementImageUpload({ status: "loading", message: t.uploadingFile, fileName: file.name });
+      const result = await uploadPackageAsset(file, token);
+      if (result.kind !== "image") {
+        setAnnouncementImageUpload({ status: "error", message: t.adminImageOnly, fileName: "" });
+        input.value = "";
+        return;
+      }
+      setAnnouncementForm((prev) => ({ ...prev, image: result.url }));
+      setAnnouncementImageUpload({ status: "success", message: t.uploadSuccessCover, fileName: file.name });
+    } catch (err) {
+      setAnnouncementImageUpload({ status: "error", message: err.message, fileName: "" });
+    }
+    input.value = "";
   };
 
   const handleSubmit = async (event) => {
@@ -531,6 +669,16 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
           </button>
           <button
             type="button"
+            className={`admin-side-btn ${activeSection === "announcements" ? "active" : ""}`}
+            onClick={() => setActiveSection("announcements")}
+          >
+            <span className="admin-side-btn-label">
+              <AdminAnnouncementIcon className="admin-side-icon" />
+              <span>{t.adminNavAnnouncements}</span>
+            </span>
+          </button>
+          <button
+            type="button"
             className={`admin-side-btn ${activeSection === "tickets" ? "active" : ""}`}
             onClick={() => setActiveSection("tickets")}
           >
@@ -687,6 +835,94 @@ const AdminPanel = ({ t, packages, setPackages, onPackagesError }) => {
                   </>
                 ) : (
                   <p className="empty-state">{t.adminNoPackages}</p>
+                )}
+              </div>
+            </>
+          ) : activeSection === "announcements" ? (
+            <>
+              <form className="admin-form" onSubmit={handleAnnouncementSubmit}>
+                <label className="admin-span-2">
+                  {t.adminAnnouncementTitle}
+                  <input
+                    value={announcementForm.title}
+                    onChange={(e) => handleAnnouncementChange("title", e.target.value)}
+                    required
+                  />
+                </label>
+                <label className="admin-span-2">
+                  {t.adminAnnouncementBody}
+                  <textarea
+                    rows="5"
+                    value={announcementForm.body}
+                    onChange={(e) => handleAnnouncementChange("body", e.target.value)}
+                  />
+                </label>
+                <label className="admin-span-2 admin-upload-field">
+                  {t.adminAnnouncementImage}
+                  <input type="file" accept="image/*" onChange={handleAnnouncementImageUpload} />
+                  <AdminUploadFeedback
+                    feedback={announcementImageUpload}
+                    attachedUrl={announcementForm.image}
+                    attachedLabel={t.adminUploadAttachedCover}
+                    kind="image"
+                    t={t}
+                  />
+                </label>
+                <label className="admin-span-2 admin-checkbox-field">
+                  <input
+                    type="checkbox"
+                    checked={announcementForm.isPublished}
+                    onChange={(e) => handleAnnouncementChange("isPublished", e.target.checked)}
+                  />
+                  <span>{t.adminAnnouncementPublished}</span>
+                </label>
+                <div className="admin-actions admin-span-2">
+                  <button type="submit" className="btn-primary">
+                    {editingAnnouncementId ? t.adminAnnouncementUpdate : t.adminAnnouncementCreate}
+                  </button>
+                  {editingAnnouncementId ? (
+                    <button type="button" className="btn-secondary" onClick={resetAnnouncementForm}>
+                      {t.adminCancel}
+                    </button>
+                  ) : null}
+                </div>
+                {announcementError ? <p className="admin-error admin-span-2">{announcementError}</p> : null}
+              </form>
+
+              <div className="admin-list">
+                <h3>{t.adminAnnouncementsManageTitle}</h3>
+                {announcements.length > 0 ? (
+                  announcements.map((item) => (
+                    <article className="admin-item" key={item.id}>
+                      <div>
+                        <strong>{item.title}</strong>
+                        <p>
+                          {item.isPublished ?? item.is_published
+                            ? t.adminAnnouncementPublishedYes
+                            : t.adminAnnouncementPublishedNo}
+                        </p>
+                        <p>{item.body}</p>
+                      </div>
+                      <div className="admin-item-actions">
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() => handleAnnouncementEdit(item)}
+                        >
+                          {t.adminEdit}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={() => handleAnnouncementDelete(item.id)}
+                        >
+                          {t.adminDelete}
+                        </button>
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <p className="empty-state">{t.adminNoAnnouncements}</p>
                 )}
               </div>
             </>

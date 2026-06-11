@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import PackageDescription from "../components/PackageDescription";
 import PackageInquiryModal from "../components/PackageInquiryModal";
 import PackagesLoadingScreen from "../components/PackagesLoadingScreen";
 import PriceRangeSlider from "../components/PriceRangeSlider";
@@ -157,7 +158,11 @@ const PackagesPage = ({ t, packages, packagesError, packagesLoading, onRetryPack
               <h3>{pkg.name}</h3>
               {hasCountry(pkg) ? <p className="package-country">{pkg.country}</p> : null}
               {hasDescription(pkg) ? (
-                <p className="package-description">{pkg.description}</p>
+                <PackageDescription
+                  text={pkg.description}
+                  readMoreLabel={t.readMore}
+                  readLessLabel={t.readLess}
+                />
               ) : null}
               {hasPrice(pkg) || hasDuration(pkg) ? (
                 <div className="package-meta">

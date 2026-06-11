@@ -8,7 +8,7 @@ import AdminPanel from "./pages/AdminPanel";
 import TicketRequest from "./pages/TicketRequest";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import CookieConsent from "./components/CookieConsent";
-import { getPackages } from "./api";
+import { getAnnouncements, getPackages } from "./api";
 import "./styles/styles.css";
 
 const translations = {
@@ -80,6 +80,26 @@ const translations = {
     page: "Page",
     of: "of",
     packageDescriptionFallback: "No extra information yet.",
+    readMore: "Read more",
+    readLess: "Show less",
+    announcementsEyebrow: "Latest updates",
+    announcementsTitle: "Agency Announcements",
+    announcementsLoading: "Loading announcements…",
+    announcementsEmpty: "No announcements at the moment. Check back soon.",
+    adminNavAnnouncements: "Announcements",
+    adminAnnouncementTitle: "Title",
+    adminAnnouncementBody: "Message",
+    adminAnnouncementImage: "Upload image (optional)",
+    adminAnnouncementPublished: "Show on home page",
+    adminAnnouncementsManageTitle: "Existing announcements",
+    adminNoAnnouncements: "No announcements yet.",
+    adminAnnouncementTitleRequired: "Please enter a title.",
+    adminAnnouncementBodyRequired: "Please enter a message.",
+    adminAnnouncementPublishedYes: "Published",
+    adminAnnouncementPublishedNo: "Hidden",
+    adminAnnouncementDeleteConfirm: "Are you sure you want to delete this announcement?",
+    adminAnnouncementCreate: "Post announcement",
+    adminAnnouncementUpdate: "Save announcement",
     adminTitle: "Admin Panel",
     adminSubtitle: "Create and update travel packages shown to users.",
     adminPackageNameRequired: "Please enter a package name.",
@@ -293,6 +313,26 @@ const translations = {
     page: "Σελίδα",
     of: "από",
     packageDescriptionFallback: "Δεν υπάρχουν επιπλέον πληροφορίες ακόμη.",
+    readMore: "Δείτε περισσότερα",
+    readLess: "Λιγότερα",
+    announcementsEyebrow: "Τελευταίες ενημερώσεις",
+    announcementsTitle: "Ανακοινώσεις του γραφείου",
+    announcementsLoading: "Φόρτωση ανακοινώσεων…",
+    announcementsEmpty: "Δεν υπάρχουν ανακοινώσεις αυτή τη στιγμή. Ελέγξτε ξανά σύντομα.",
+    adminNavAnnouncements: "Ανακοινώσεις",
+    adminAnnouncementTitle: "Τίτλος",
+    adminAnnouncementBody: "Μήνυμα",
+    adminAnnouncementImage: "Ανέβασμα εικόνας (προαιρετικό)",
+    adminAnnouncementPublished: "Εμφάνιση στην αρχική σελίδα",
+    adminAnnouncementsManageTitle: "Υπάρχουσες ανακοινώσεις",
+    adminNoAnnouncements: "Δεν υπάρχουν ανακοινώσεις ακόμη.",
+    adminAnnouncementTitleRequired: "Παρακαλώ εισάγετε τίτλο.",
+    adminAnnouncementBodyRequired: "Παρακαλώ εισάγετε μήνυμα.",
+    adminAnnouncementPublishedYes: "Δημοσιευμένη",
+    adminAnnouncementPublishedNo: "Κρυφή",
+    adminAnnouncementDeleteConfirm: "Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή την ανακοίνωση;",
+    adminAnnouncementCreate: "Δημοσίευση ανακοίνωσης",
+    adminAnnouncementUpdate: "Αποθήκευση ανακοίνωσης",
     adminTitle: "Πίνακας Διαχείρισης",
     adminSubtitle: "Δημιουργήστε και ενημερώστε τα ταξιδιωτικά πακέτα που βλέπουν οι χρήστες.",
     adminPackageNameRequired: "Παρακαλώ εισάγετε όνομα πακέτου.",
@@ -454,6 +494,8 @@ const AppContent = () => {
   const [allPackages, setAllPackages] = useState([]);
   const [packagesError, setPackagesError] = useState("");
   const [packagesLoading, setPackagesLoading] = useState(true);
+  const [announcements, setAnnouncements] = useState([]);
+  const [announcementsLoading, setAnnouncementsLoading] = useState(true);
   const t = translations[lang];
   const isAdminRoute = location.pathname.startsWith("/admin");
   const prevPathRef = useRef(location.pathname);
@@ -482,9 +524,22 @@ const AppContent = () => {
     setPackagesLoading(false);
   }, [t.packagesLoadError]);
 
+  const loadAnnouncements = useCallback(async () => {
+    setAnnouncementsLoading(true);
+    try {
+      const rows = await getAnnouncements();
+      setAnnouncements(Array.isArray(rows) ? rows : []);
+    } catch (_err) {
+      setAnnouncements([]);
+    } finally {
+      setAnnouncementsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadPackages();
-  }, [loadPackages]);
+    loadAnnouncements();
+  }, [loadPackages, loadAnnouncements]);
 
   /** Render free tier cold start: first fetch may fail; refetch after admin often warms the API. */
   useEffect(() => {
@@ -493,8 +548,9 @@ const AppContent = () => {
     prevPathRef.current = location.pathname;
     if (leftAdmin) {
       loadPackages();
+      loadAnnouncements();
     }
-  }, [location.pathname, loadPackages]);
+  }, [location.pathname, loadPackages, loadAnnouncements]);
 
   return (
     <div className="app-shell">
@@ -515,7 +571,17 @@ const AppContent = () => {
       )}
       <main className="page-content">
         <Routes>
-          <Route path="/" element={<Home t={t} />} />
+          <Route
+            path="/"
+            element={
+              <Home
+                t={t}
+                lang={lang}
+                announcements={announcements}
+                announcementsLoading={announcementsLoading}
+              />
+            }
+          />
           <Route
             path="/packages"
             element={
@@ -538,6 +604,7 @@ const AppContent = () => {
                 packages={allPackages}
                 setPackages={setAllPackages}
                 onPackagesError={setPackagesError}
+                onAnnouncementsChanged={loadAnnouncements}
               />
             }
           />

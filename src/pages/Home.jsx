@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import heroWallpaper from "../assets/hero2.jpg";
 import brandLogo from "../assets/logo.png";
 import stellaProfile from "../assets/Stella.png";
+import AnnouncementsSection from "../components/AnnouncementsSection";
 import WeeklyHours from "../components/WeeklyHours";
 import { FacebookIcon, InstagramIcon } from "../components/SocialIcons";
 import { partnerAgencies } from "../Data/partnerAgencies";
@@ -14,7 +15,7 @@ function partnerWebsiteHref(raw) {
   return `https://${s}`;
 }
 
-const Home = ({ t }) => {
+const Home = ({ t, lang, announcements, announcementsLoading }) => {
   const [profileFallback, setProfileFallback] = useState(false);
   const [heroAboutVisible, setHeroAboutVisible] = useState(false);
   const heroAboutRef = useRef(null);
@@ -104,6 +105,13 @@ const Home = ({ t }) => {
           </div>
         </section>
       </div>
+
+      <AnnouncementsSection
+        t={t}
+        lang={lang}
+        announcements={announcements}
+        loading={announcementsLoading}
+      />
 
       {partnerAgencies.length > 0 ? (
         <section className="partners-section" id="partners" aria-labelledby="partners-heading">

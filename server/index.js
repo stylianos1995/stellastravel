@@ -174,6 +174,121 @@ app.get("/api/packages", async (_req, res, next) => {
   }
 });
 
+const formatAnnouncementRow = (row) => {
+  if (!row) return row;
+  return {
+    id: row.id,
+    title: row.title,
+    body: row.body,
+    image: row.image || "",
+    isPublished: Boolean(row.is_published),
+    is_published: row.is_published,
+    createdAt: row.created_at,
+    created_at: row.created_at,
+  };
+};
+
+app.get("/api/announcements", async (_req, res, next) => {
+  try {
+    const rows = await all(
+      "SELECT * FROM announcements WHERE is_published = 1 ORDER BY id DESC"
+    );
+    res.json(rows.map(formatAnnouncementRow));
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get("/api/announcements/all", authenticateToken, async (_req, res, next) => {
+  try {
+    const rows = await all("SELECT * FROM announcements ORDER BY id DESC");
+    res.json(rows.map(formatAnnouncementRow));
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post("/api/announcements", authenticateToken, async (req, res, next) => {
+  try {
+    const body = req.body || {};
+    const title = String(body.title ?? "").trim();
+    const announcementBody = String(body.body ?? "").trim();
+    const image = String(body.image ?? "").trim();
+    const isPublished = body.isPublished ?? body.is_published;
+    const published = isPublished === undefined || isPublished === null ? 1 : isPublished ? 1 : 0;
+
+    if (!title) {
+      res.status(400).json({ message: "Announcement title is required." });
+      return;
+    }
+    if (!announcementBody) {
+      res.status(400).json({ message: "Announcement message is required." });
+      return;
+    }
+
+    const createdAt = new Date().toISOString();
+    const result = await runInsert(
+      "INSERT INTO announcements (title, body, image, is_published, created_at) VALUES (?, ?, ?, ?, ?)",
+      [title, announcementBody, image, published, createdAt]
+    );
+
+    const created = await get("SELECT * FROM announcements WHERE id = ?", [result.lastID]);
+    res.status(201).json(formatAnnouncementRow(created));
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.put("/api/announcements/:id", authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const body = req.body || {};
+    const title = String(body.title ?? "").trim();
+    const announcementBody = String(body.body ?? "").trim();
+    const image = String(body.image ?? "").trim();
+    const isPublished = body.isPublished ?? body.is_published;
+    const published = isPublished === undefined || isPublished === null ? 1 : isPublished ? 1 : 0;
+
+    if (!title) {
+      res.status(400).json({ message: "Announcement title is required." });
+      return;
+    }
+    if (!announcementBody) {
+      res.status(400).json({ message: "Announcement message is required." });
+      return;
+    }
+
+    const result = await run(
+      "UPDATE announcements SET title = ?, body = ?, image = ?, is_published = ? WHERE id = ?",
+      [title, announcementBody, image, published, id]
+    );
+
+    if (result.changes === 0) {
+      res.status(404).json({ message: "Announcement not found." });
+      return;
+    }
+
+    const updated = await get("SELECT * FROM announcements WHERE id = ?", [id]);
+    res.json(formatAnnouncementRow(updated));
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.delete("/api/announcements/:id", authenticateToken, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await run("DELETE FROM announcements WHERE id = ?", [id]);
+    if (result.changes === 0) {
+      res.status(404).json({ message: "Announcement not found." });
+      return;
+    }
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.post("/api/tickets", async (req, res, next) => {
   try {
     const {
